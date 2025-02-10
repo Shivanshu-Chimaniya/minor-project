@@ -39,6 +39,7 @@ const Layout = () => {
 				<div className="flex justify-between items-center">
 					{/* Logo */}
 					<div className="text-2xl font-bold">
+						{/* Menu Button */}
 						<button
 							onClick={toggleSidebar}
 							aria-label="toggle-sidebar"
@@ -47,8 +48,6 @@ const Layout = () => {
 						</button>
 						InterviewPrep AI
 					</div>
-
-					{/* Menu Button */}
 
 					{/* Action Button */}
 					<button
