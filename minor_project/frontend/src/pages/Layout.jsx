@@ -1,47 +1,59 @@
 import {Outlet} from "react-router-dom";
-import {useState} from "react";
+import {useState, useEffect, useRef} from "react";
 import {useNavigate} from "react-router-dom";
-import "../App.css";
 
 const Layout = () => {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const navigate = useNavigate();
+	const sidebarRef = useRef(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (
+				sidebarRef.current &&
+				!sidebarRef.current.contains(event.target) &&
+				!event.target.closest('button[aria-label="toggle-sidebar"]')
+			) {
+				setIsSidebarOpen(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
 
 	const toggleSidebar = () => {
 		setIsSidebarOpen(!isSidebarOpen);
 	};
 
+	const handleNavigation = (path) => {
+		navigate(path);
+		setIsSidebarOpen(false);
+	};
+
 	return (
-		<div className="app">
-			<nav className="header">
-				<div
-					style={{
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-					}}>
+		<div className="min-h-screen flex flex-col">
+			<nav className="bg-gray-800 text-white p-4">
+				<div className="flex justify-between items-center">
 					{/* Logo */}
-					<div style={{fontSize: "1.5rem", fontWeight: "bold"}}>
+					<div className="text-2xl font-bold">
+						<button
+							onClick={toggleSidebar}
+							aria-label="toggle-sidebar"
+							className="bg-transparent border-none text-white cursor-pointer p-2">
+							☰
+						</button>
 						InterviewPrep AI
 					</div>
 
 					{/* Menu Button */}
-					<button
-						onClick={toggleSidebar}
-						style={{
-							background: "none",
-							border: "none",
-							color: "white",
-							cursor: "pointer",
-							padding: "0.5rem",
-						}}>
-						☰ Menu
-					</button>
 
 					{/* Action Button */}
 					<button
-						className="cta-button"
-						onClick={() => navigate("/interviews")}>
+						className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition-colors duration-300"
+						onClick={() => handleNavigation("/interviews")}>
 						Get Started
 					</button>
 				</div>
@@ -50,43 +62,44 @@ const Layout = () => {
 			{/* Sidebar */}
 			{isSidebarOpen && (
 				<div
-					style={{
-						position: "fixed",
-						top: 0,
-						left: 0,
-						height: "100%",
-						width: "250px",
-						backgroundColor: "#2c3e50",
-						padding: "1rem",
-						color: "white",
-						zIndex: 1000,
-					}}>
+					ref={sidebarRef}
+					className="fixed top-0 left-0 h-full w-64 bg-gray-800 p-4 text-white z-50">
 					<button
 						onClick={toggleSidebar}
-						style={{
-							background: "none",
-							border: "none",
-							color: "white",
-							cursor: "pointer",
-							marginBottom: "1rem",
-						}}>
+						className="bg-transparent border-none text-white cursor-pointer mb-4">
 						✕ Close
 					</button>
-					<ul style={{listStyle: "none"}}>
-						<li style={{padding: "0.5rem 0"}}>Home</li>
-						<li style={{padding: "0.5rem 0"}}>Interviews</li>
-						<li style={{padding: "0.5rem 0"}}>Upload Resume</li>
-						<li style={{padding: "0.5rem 0"}}>About</li>
+					<ul className="list-none">
+						<li
+							className="py-2 cursor-pointer"
+							onClick={() => handleNavigation("/")}>
+							Home
+						</li>
+						<li
+							className="py-2 cursor-pointer"
+							onClick={() => handleNavigation("/interviews")}>
+							Interviews
+						</li>
+						<li
+							className="py-2 cursor-pointer"
+							onClick={() => handleNavigation("/upload-resume")}>
+							Upload Resume
+						</li>
+						<li
+							className="py-2 cursor-pointer"
+							onClick={() => handleNavigation("/about")}>
+							About
+						</li>
 					</ul>
 				</div>
 			)}
 
 			{/* Main content */}
-			<main className="main">
+			<main className="flex-grow">
 				<Outlet />
 			</main>
 
-			<footer className="footer">
+			<footer className="bg-gray-800 text-white p-4 text-center">
 				<p>© 2024 InterviewPrep AI. All rights reserved.</p>
 			</footer>
 		</div>
