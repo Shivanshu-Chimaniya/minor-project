@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+* {
+    user-select: none;
+    scrollbar-width: none;
+  }
+  
+  

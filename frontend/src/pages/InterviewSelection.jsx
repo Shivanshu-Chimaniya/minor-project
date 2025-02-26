@@ -1,37 +1,45 @@
 import {useNavigate} from "react-router-dom";
+import {useState} from "react";
 
-const InterviewSelection = () => {
+const InterviewSelection = ({startInterview}) => {
 	const navigate = useNavigate();
+
+	const [jobLevel, setJobLevel] = useState(1);
+	const [jobDescription, setJobDescription] = useState("");
 
 	const interviewTypes = [
 		{
-			title: "Software Engineering Interview",
-			description:
-				"Practice technical questions and system design discussions commonly asked in software engineering interviews.",
-			type: "swe",
+			"title": "Backend Developer Intern",
+			"level": "fresher",
+			"description":
+				"This test is about evaluating your understanding of backend development, including working with server-side logic, APIs, and databases. You will be expected to use technologies like Node.js, Express, and MongoDB or PostgreSQL to build and optimize backend systems. The role will involve handling authentication, database operations, and server performance improvements while collaborating with frontend developers to integrate APIs effectively.",
 		},
 		{
-			title: "Product Management Interview",
-			description:
-				"Prepare for product sense, analytical, and leadership questions typical in PM interviews.",
-			type: "pm",
+			"title": "DevOps Engineer",
+			"level": "mid-level",
+			"description":
+				"This test is about assessing your ability to automate infrastructure, manage cloud services, and optimize CI/CD pipelines. You should have experience with Docker, Kubernetes, AWS/GCP, and scripting languages like Bash or Python. The role includes monitoring system performance, ensuring deployment efficiency, and enhancing security practices within the development workflow.",
 		},
 		{
-			title: "Data Science Interview",
-			description:
-				"Practice statistical concepts, machine learning fundamentals, and technical problem solving.",
-			type: "ds",
-		},
-		{
-			title: "Behavioral Interview",
-			description:
-				"Master common behavioral and situational questions asked across all roles.",
-			type: "behavioral",
+			"title": "AI/ML Engineer",
+			"level": "senior",
+			"description":
+				"This test is about measuring your expertise in developing and deploying machine learning models for real-world applications. You will work with Python, TensorFlow/PyTorch, and data processing frameworks to build AI-driven solutions. Responsibilities include designing scalable ML pipelines, improving model accuracy, and optimizing inference performance while collaborating with data engineers and software developers.",
 		},
 	];
 
-	const startInterview = (type) => {
-		navigate("/interview", {state: {interviewType: type}});
+	const handleJobSubmit = (e) => {
+		e.preventDefault();
+		if (jobDescription.length > 2000) {
+			alert("Job description must be under 2000 characters.");
+			return;
+		}
+		handleStartInterview(jobLevel, jobDescription);
+	};
+
+	const handleStartInterview = (level, jobDescription) => {
+		startInterview(level, jobDescription);
+		navigate("/interview");
 	};
 
 	return (
@@ -49,17 +57,68 @@ const InterviewSelection = () => {
 							<h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
 								{interview.title}
 							</h2>
-							<p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+							<p className="text-gray-600 leading-relaxed line-clamp-3 text-base sm:text-lg  ">
 								{interview.description}
 							</p>
 						</div>
 						<button
-							onClick={() => startInterview(interview.type)}
+							onClick={() =>
+								handleStartInterview(
+									interview.level,
+									interview.description
+								)
+							}
 							className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-base sm:text-lg">
 							Start Interview
 						</button>
 					</div>
 				))}
+			</div>
+
+			<div className="bg-gray-100 p-6 sm:p-8 rounded-lg shadow-md">
+				<h2 className="text-2xl font-semibold text-gray-800 mb-4">
+					Add New Job
+				</h2>
+				<form onSubmit={handleJobSubmit} className="space-y-4">
+					<div>
+						<label className="block text-gray-700 font-medium mb-2">
+							Job Level:{" "}
+							{jobLevel === 1
+								? "Beginner"
+								: jobLevel === 2
+								? "Mid-Senior"
+								: "Senior"}
+						</label>
+						<input
+							type="range"
+							min="1"
+							max="3"
+							value={jobLevel}
+							onChange={(e) =>
+								setJobLevel(Number(e.target.value))
+							}
+							className="w-full cursor-pointer"
+						/>
+					</div>
+
+					<div>
+						<label className="block text-gray-700 font-medium mb-2">
+							Job Description (Max: 2000 characters)
+						</label>
+						<textarea
+							value={jobDescription}
+							onChange={(e) => setJobDescription(e.target.value)}
+							maxLength={2000}
+							rows="4"
+							className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+					</div>
+
+					<button
+						type="submit"
+						className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-md transition-colors duration-300 w-full">
+						Submit Job
+					</button>
+				</form>
 			</div>
 		</div>
 	);

@@ -52,7 +52,7 @@ const Layout = () => {
 					{/* Action Button */}
 					<button
 						className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition-colors duration-300"
-						onClick={() => handleNavigation("/interviews")}>
+						onClick={() => handleNavigation("/selectinterview")}>
 						Get Started
 					</button>
 				</div>

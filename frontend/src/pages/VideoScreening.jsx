@@ -1,11 +1,25 @@
-import {useState, useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import React from "react";
+import {useBackend} from "../context/Backend";
 
-const VideoScreening = () => {
-	const [stream, setStream] = useState(null);
+const VideoScreening = ({questions, completeInterview, questionAudio}) => {
+	const backend = useBackend();
+	const transcriptRef = useRef("");
+	// answers
+	const [questionNumber, setQuestionNumber] = useState(0);
+	const [answers, setAnswers] = useState([]);
+
+	//video
 	const videoRef = useRef(null);
-	const [subtitle, setSubtitle] = useState(
-		"Hello! I'm your AI interviewer today. Are you ready to begin?"
-	);
+	const [stream, setStream] = useState(null);
+
+	// audio
+	// trascript
+	const [transcript, setTranscript] = useState("");
+	const [isListening, setIsListening] = useState(false);
+	const recognitionRef = useRef(null);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		const startWebcam = async () => {
@@ -32,6 +46,93 @@ const VideoScreening = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (questionAudio.length == 0) return;
+		for (let audio of questionAudio) {
+			audio.addEventListener("ended", startListening);
+		}
+		askNextQuestion(0);
+	}, [questionAudio]);
+
+	useEffect(() => {
+		if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+			alert("Speech Recognition is not supported in this browser.");
+			return;
+		}
+
+		const SpeechRecognition =
+			window.SpeechRecognition || window.webkitSpeechRecognition;
+		recognitionRef.current = new SpeechRecognition();
+		recognitionRef.current.lang = "en-US";
+		recognitionRef.current.interimResults = true;
+		recognitionRef.current.continuous = true;
+
+		recognitionRef.current.onresult = (event) => {
+			let finalTranscript = "";
+			for (let i = 0; i < event.results.length; i++) {
+				finalTranscript += event.results[i][0].transcript + " ";
+			}
+			finalTranscript.trim();
+			transcriptRef.current = finalTranscript;
+
+			setTranscript(finalTranscript);
+		};
+
+		recognitionRef.current.onerror = (event) => {
+			console.error("Speech recognition error:", event.error);
+			setIsListening(false);
+		};
+	}, []);
+	// Stop listening when user presses any key
+	useEffect(() => {
+		const handleKeyPress = () => {
+			stopListening();
+		};
+
+		if (isListening) {
+			window.addEventListener("keydown", handleKeyPress);
+		}
+
+		return () => {
+			window.removeEventListener("keydown", handleKeyPress);
+		};
+	}, [isListening]);
+
+	const handleAnswerSubmission = (answer) => {
+		setAnswers((prev) => {
+			return [...prev, answer];
+		});
+		if (questionNumber + 1 == questions.length) {
+			completeInterview([...answers, answer]);
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
+			navigate("/interview/summary");
+			return;
+		}
+		let index = questionNumber + 1;
+		setQuestionNumber((prev) => prev + 1);
+		askNextQuestion(index);
+	};
+
+	const startListening = () => {
+		if (!recognitionRef.current) return;
+		setIsListening(true);
+		recognitionRef.current.start();
+	};
+
+	const stopListening = () => {
+		if (!recognitionRef.current) return;
+		recognitionRef.current.stop();
+		handleAnswerSubmission(transcriptRef.current);
+		setIsListening(false);
+		setTranscript("");
+	};
+
+	const askNextQuestion = (index) => {
+		questionAudio[index].play();
+	};
+
 	return (
 		<div className="min-h-screen bg-gray-50 p-4 md:p-8">
 			<div className="max-w-6xl mx-auto">
@@ -55,9 +156,28 @@ const VideoScreening = () => {
 								AI Interviewer
 							</span>
 						</div>
-						<p className="text-lg text-gray-700 leading-relaxed">
-							{subtitle}
+						<p className="text-lg text-black-700 leading-relaxed">
+							{questions[questionNumber]}
 						</p>
+
+						<div className="p-4 max-w-lg mx-auto text-center">
+							<h2 className="text-xl font-semibold">
+								🎤 Speech Transcriber
+							</h2>
+							<button
+								onClick={startListening}
+								className={`mt-4 px-6 py-2 text-white font-semibold rounded-md ${
+									isListening ? "bg-red-500" : "bg-blue-500"
+								}`}>
+								{isListening
+									? "Listening..."
+									: "Start Speaking"}
+							</button>
+							<p className="mt-4 p-2 bg-gray-100 rounded-md min-h-[80px]">
+								{transcript ||
+									"Your speech will appear here..."}
+							</p>
+						</div>
 					</div>
 
 					{/* Controls Section */}

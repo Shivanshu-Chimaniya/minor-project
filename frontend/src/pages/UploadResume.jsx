@@ -2,7 +2,7 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {FaCloudUploadAlt} from "react-icons/fa";
 
-const UploadResume = () => {
+const UploadResume = ({getQuestions, uploadResume}) => {
 	const [file, setFile] = useState(null);
 	const [dragActive, setDragActive] = useState(false);
 	const navigate = useNavigate();
@@ -34,9 +34,9 @@ const UploadResume = () => {
 		}
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		if (file) {
-			// Handle file upload logic here
+			uploadResume(file);
 			navigate("/interview/videoscreening");
 		}
 	};
@@ -68,7 +68,7 @@ const UploadResume = () => {
 										<input
 											type="file"
 											className="hidden"
-											accept=".pdf,.doc,.docx"
+											accept=".pdf,.doc"
 											onChange={handleChange}
 										/>
 									</label>
@@ -103,8 +103,7 @@ const UploadResume = () => {
 									•
 								</span>
 								<span className="text-lg">
-									Ensure your resume is in PDF, DOC, or DOCX
-									format
+									Ensure your resume is in PDF or DOC format
 								</span>
 							</li>
 							<li className="flex items-start transform hover:translate-x-2 transition-transform duration-200">
