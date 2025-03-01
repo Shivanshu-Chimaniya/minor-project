@@ -6,6 +6,7 @@ import {useBackend} from "../context/Backend";
 const VideoScreening = ({questions, completeInterview, questionAudio}) => {
 	const backend = useBackend();
 	const transcriptRef = useRef("");
+	const transcriptElementRef = useRef(null);
 	// answers
 	const [questionNumber, setQuestionNumber] = useState(0);
 	const [answers, setAnswers] = useState([]);
@@ -133,12 +134,19 @@ const VideoScreening = ({questions, completeInterview, questionAudio}) => {
 		questionAudio[index].play();
 	};
 
+	useEffect(() => {
+		if (transcriptElementRef.current) {
+			transcriptElementRef.current.scrollTop =
+				transcriptElementRef.current.scrollHeight;
+		}
+	}, [transcript]);
 	return (
 		<div className="min-h-screen bg-gray-50 p-4 md:p-8">
-			<div className="max-w-6xl mx-auto">
-				<div className="flex flex-col space-y-6">
+			<div className="w-full mx-auto max-w-6xl">
+				{/* Main Content Layout */}
+				<div className="flex flex-col md:flex-row gap-6 justify-center items-center">
 					{/* Webcam Feed Section */}
-					<div className="relative aspect-video w-full max-w-4xl mx-auto">
+					<div className="relative aspect-video w-full md:w-2/3 h-full">
 						<video
 							ref={videoRef}
 							autoPlay
@@ -149,20 +157,22 @@ const VideoScreening = ({questions, completeInterview, questionAudio}) => {
 					</div>
 
 					{/* Subtitles Section */}
-					<div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 transition-all duration-300">
-						<div className="flex items-center space-x-3 mb-2">
-							<div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-							<span className="text-sm text-gray-500">
-								AI Interviewer
-							</span>
+					<div className="w-full md:w-1/3 bg-white rounded-lg shadow-md p-6 transition-all duration-300 flex flex-col justify-between">
+						<div>
+							<div className="flex items-center space-x-3 mb-2">
+								<div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+								<span className="text-sm text-gray-500">
+									AI Interviewer
+								</span>
+							</div>
+							<p className="text-sm text-black-700 leading-relaxed">
+								{questions[questionNumber]}
+							</p>
 						</div>
-						<p className="text-lg text-black-700 leading-relaxed">
-							{questions[questionNumber]}
-						</p>
 
-						<div className="p-4 max-w-lg mx-auto text-center">
+						<div className="p-1 w-full max-w-lg mx-auto text-center grow flex flex-col">
 							<h2 className="text-xl font-semibold">
-								🎤 Speech Transcriber
+								Speech Transcriber
 							</h2>
 							<button
 								onClick={startListening}
@@ -173,24 +183,14 @@ const VideoScreening = ({questions, completeInterview, questionAudio}) => {
 									? "Listening..."
 									: "Start Speaking"}
 							</button>
-							<p className="mt-4 p-2 bg-gray-100 rounded-md min-h-[80px]">
+
+							<p
+								ref={transcriptElementRef}
+								className="mt-4 grow w-full p-2 bg-gray-100 rounded-md min-h-[80px] max-h-[200px] overflow-y-auto">
 								{transcript ||
 									"Your speech will appear here..."}
 							</p>
 						</div>
-					</div>
-
-					{/* Controls Section */}
-					<div className="flex justify-center space-x-4">
-						<button className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-300">
-							End Interview
-						</button>
-						<button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors duration-300">
-							Toggle Microphone
-						</button>
-						<button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors duration-300">
-							Toggle Camera
-						</button>
 					</div>
 				</div>
 			</div>

@@ -8,7 +8,6 @@ import VideoScreening from "./pages/VideoScreening";
 import Summary from "./pages/Summary";
 import {useState} from "react";
 import {useBackend} from "./context/Backend";
-// import SpeechTranscriber from "./pages/transciber";
 
 function App() {
 	const backend = useBackend();

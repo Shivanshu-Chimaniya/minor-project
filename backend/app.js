@@ -23,12 +23,12 @@ const storage = multer.memoryStorage();
 const upload = multer({storage: storage});
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 // MongoDB Connection
-const MONGODB_URI =
-	process.env.MONGODB_URI || "mongodb://localhost:27017/interviewprep";
-mongoose
-	.connect(MONGODB_URI)
-	.then(() => console.log("Connected to MongoDB"))
-	.catch((err) => console.error("MongoDB connection error:", err));
+// const MONGODB_URI =
+// 	process.env.MONGODB_URI || "mongodb://localhost:27017/interviewprep";
+// mongoose
+// 	.connect(MONGODB_URI)
+// 	.then(() => console.log("Connected to MongoDB"))
+// 	.catch((err) => console.error("MongoDB connection error:", err));
 
 // Basic route
 app.get("/", (req, res) => {
@@ -48,9 +48,10 @@ app.post("/getquestions", async (req, res) => {
 	}
 	try {
 		const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
-		const prompt = `Generate 3-5 structured verbal interview questions for a ${level} role based on the following job description:
+		const prompt = `Generate 3 to 5 structured verbal interview questions for a ${level} role based on the following job description:
 		${jobDescription}
 		Ensure the questions focus primarily on coding topics that can be answered verbally, covering problem-solving, algorithms, data structures, system design, and coding best practices. Include a mix of theoretical and practical coding scenarios.
+		keep it short, max 1 min to answer a question.
 		Output the questions in JSON format as follows:
 		{
 			"questions": [
@@ -174,7 +175,7 @@ app.post("/getoverallresult", async (req, res) => {
 						"strengths": ["List key strengths observed in responses."],
 						"weaknesses": ["List specific areas where improvement is needed."],
 						"overall_score": X.X,
-						"final_verdict": "Concise summary of the candidate’s performance."
+						"final_verdict": "Concise summary of the candidate's performance."
 					}
 					}`;
 
