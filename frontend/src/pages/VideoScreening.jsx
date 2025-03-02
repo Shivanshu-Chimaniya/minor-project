@@ -3,13 +3,17 @@ import {useNavigate} from "react-router-dom";
 import React from "react";
 import {useBackend} from "../context/Backend";
 
-const VideoScreening = ({questions, completeInterview, questionAudio}) => {
+const VideoScreening = ({
+	questions,
+	completeInterview,
+	questionAudio,
+	saveAnswer,
+}) => {
 	const backend = useBackend();
 	const transcriptRef = useRef("");
 	const transcriptElementRef = useRef(null);
 	// answers
 	const [questionNumber, setQuestionNumber] = useState(0);
-	const [answers, setAnswers] = useState([]);
 
 	//video
 	const videoRef = useRef(null);
@@ -100,20 +104,16 @@ const VideoScreening = ({questions, completeInterview, questionAudio}) => {
 	}, [isListening]);
 
 	const handleAnswerSubmission = (answer) => {
-		setAnswers((prev) => {
-			return [...prev, answer];
-		});
+		saveAnswer(answer, questionNumber);
 		if (questionNumber + 1 == questions.length) {
-			completeInterview([...answers, answer]);
 			if (stream) {
 				stream.getTracks().forEach((track) => track.stop());
 			}
 			navigate("/interview/summary");
 			return;
 		}
-		let index = questionNumber + 1;
+		askNextQuestion(questionNumber + 1);
 		setQuestionNumber((prev) => prev + 1);
-		askNextQuestion(index);
 	};
 
 	const startListening = () => {

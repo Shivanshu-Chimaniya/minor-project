@@ -19,11 +19,12 @@ function App() {
 		"description": null,
 	});
 	const [resumeResult, setResumeResult] = useState([]);
-	const [answers, setAnswers] = useState([]);
+	const [answers, setAnswers] = useState({});
 	const [overallResult, setOverallResult] = useState({});
+	const [feedbacks, setFeedbacks] = useState({});
 
 	const startInterview = async (level, jobDescription) => {
-		setJobDetails({level, jobDescription});
+		setJobDetails({level, "description": jobDescription});
 		getQuestions(level, jobDescription);
 	};
 
@@ -42,8 +43,22 @@ function App() {
 		}
 		setQuestionAudio(temp);
 	};
+
+	const saveAnswer = async (answer, questionNumber) => {
+		let newAnswers = {...answers, [questionNumber]: answer};
+		setAnswers(newAnswers);
+		let feedback = await backend.getAnswerFeedback(
+			questions[questionNumber],
+			answer
+		);
+		if (questionNumber + 1 == questions.length) {
+			completeInterview(newAnswers);
+		}
+		setFeedbacks((prev) => {
+			return {...prev, [questionNumber]: feedback};
+		});
+	};
 	const completeInterview = async (answers) => {
-		setAnswers(answers);
 		let result = await backend.getOverallResult(questions, answers);
 		setOverallResult(result);
 	};
@@ -83,6 +98,7 @@ function App() {
 									questions={questions}
 									completeInterview={completeInterview}
 									questionAudio={questionAudio}
+									saveAnswer={saveAnswer}
 								/>
 							}
 						/>
@@ -94,6 +110,7 @@ function App() {
 									answers={answers}
 									overallResult={overallResult}
 									resumeResult={resumeResult}
+									feedbacks={feedbacks}
 								/>
 							}
 						/>

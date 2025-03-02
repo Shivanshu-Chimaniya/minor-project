@@ -13,6 +13,13 @@ const util = require("util");
 const {removeBeforeAndAfter} = require("./utils");
 require("dotenv").config();
 
+const {
+	makeOverallFeedbackPrompt,
+	makeAnwserFeedbackPrompt,
+	makeQuestionPrompt,
+	makeResumePrompt,
+} = require("./prompts");
+
 const app = express();
 
 // Middleware
@@ -48,20 +55,7 @@ app.post("/getquestions", async (req, res) => {
 	}
 	try {
 		const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
-		const prompt = `Generate 3 to 5 structured verbal interview questions for a ${level} role based on the following job description:
-		${jobDescription}
-		Ensure the questions focus primarily on coding topics that can be answered verbally, covering problem-solving, algorithms, data structures, system design, and coding best practices. Include a mix of theoretical and practical coding scenarios.
-		keep it short, max 1 min to answer a question.
-		Output the questions in JSON format as follows:
-		{
-			"questions": [
-				"Question 1",
-				"Question 2",
-				"Question 3",
-				"Question 4",
-				"Question 5"
-				]
-				}`;
+		const prompt = makeQuestionPrompt({level, jobDescription});
 
 		const result = await model.generateContent(prompt);
 		const resultText = result.response.text();
@@ -100,24 +94,7 @@ app.post("/uploadresume", upload.single("resume"), async (req, res) => {
 		const reducedText = extractedText.replace(/\s+/g, " ").trim();
 
 		const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
-		const prompt = `You are an AI hiring assistant. Evaluate a candidate's resume against a job description and return a structured JSON response.
-						Scoring Criteria (Total: 100 points)
-							Skills Match (30 pts): Relevant skills from the job description.
-							Experience Relevance (25 pts): Relevant work history.
-							Education & Certifications (15 pts): Meets qualification criteria.
-							Achievements & Impact (15 pts): Measurable results.
-							Resume Quality (15 pts): Clarity and professionalism.
-						Output Format (JSON):
-							{
-							"score": XX,
-							"strengths": ["...", "...", "..."],
-							"weaknesses": ["...", "...", "..."],
-							"suggestions": ["...", "...", "..."]
-							}
-						Input Variables:
-							job_description: "${jobDescription}"
-							resume_text: "${reducedText}"
-						Now, analyze the provided resume and return a JSON response.`;
+		const prompt = makeResumePrompt({jobDescription, reducedText});
 
 		const result = await model.generateContent(prompt);
 		const resultText = result.response.text();
@@ -129,6 +106,21 @@ app.post("/uploadresume", upload.single("resume"), async (req, res) => {
 		res.status(500).json({error: "Internal server error"});
 	}
 });
+app.post("/getanswerfeedback", async (req, res) => {
+	const {question, answer} = req.body;
+	if (typeof question == "undefined" || typeof answer == "undefined") {
+		res.status(400).send(JSON.stringify("Wrong Input"));
+	}
+
+	const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
+	const prompt = makeAnwserFeedbackPrompt({question, answer});
+
+	const result = await model.generateContent(prompt);
+	const resultText = result.response.text();
+
+	const feedback = removeBeforeAndAfter(resultText);
+	res.send(JSON.stringify(feedback));
+});
 app.post("/getoverallresult", async (req, res) => {
 	const {questions, answers} = req.body;
 	if (typeof questions == "undefined" || typeof answers == "undefined") {
@@ -136,53 +128,13 @@ app.post("/getoverallresult", async (req, res) => {
 	}
 
 	const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
-	const prompt = `I am evaluating my interview performance based questions and answers. Please keep a positive tone in your response, show some grace when providing scores, and assign a score out of ten for each answer. Include a potential perfect answer for comparison, but remember that the answers are given by humans.
-					Empty string means no answer is provided and it is intorelable.
-					Questions:
-					${questions}
-
-					Candidate's Answers:
-					${answers}
-
-					Evaluation Criteria:
-
-					Point out mistakes directly without explaining or justifying them.
-					If there are no mistakes, highlight something good about the answer.
-					Show grace when giving scores, but make sure they reflect the quality of the answer.
-					Provide a potential perfect answer for each question.
-					Keep the feedback brief and to the point.
-					Do not generate unnecessary information or make up details.
-					Identify key strengths based on the candidate's performance.
-					List specific weaknesses that need improvement.
-					Provide a final verdict concisely.
-
-					Response Format (JSON Output):
-					{
-					"evaluation": {
-						"feedback": {
-						"question_1": {
-							"score": X.X,
-							"feedback": "Brief feedback pointing out mistakes or appreciation.",
-							"perfect_answer": "The potential perfect answer."
-						},
-						"question_2": {
-							"score": X.X,
-							"feedback": "Brief feedback pointing out mistakes or appreciation.",
-							"perfect_answer": "The potential perfect answer."
-						},
-						"...": "Feedback for all provided questions."
-						},
-						"strengths": ["List key strengths observed in responses."],
-						"weaknesses": ["List specific areas where improvement is needed."],
-						"overall_score": X.X,
-						"final_verdict": "Concise summary of the candidate's performance."
-					}
-					}`;
+	const prompt = makeOverallFeedbackPrompt({questions, answers});
 
 	const result = await model.generateContent(prompt);
 	const resultText = result.response.text();
 
 	const overallResult = removeBeforeAndAfter(resultText);
+
 	res.send(JSON.stringify(overallResult));
 });
 
@@ -193,7 +145,7 @@ app.post("/getaudio", async (req, res) => {
 			return res.status(400).json({error: "Text is required"});
 		}
 		const client = new textToSpeech.TextToSpeechClient({
-			keyFilename: "./superb-garden-449619-k6-4e7b2da6acf6.json",
+			keyFilename: "./mygooglekey.json",
 		});
 
 		const request = {

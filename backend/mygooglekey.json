@@ -1,0 +1,13 @@
+{
+    "type": "service_account",
+    "project_id": "superb-garden-449619-k6",
+    "private_key_id": "4e7b2da6acf677e91cde5c68a5d657d341bd05b9",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCpL3WhUsnPLSge\nH/3YNij852m3SEMBj9fJ4DyTJK3wv/Bh3VSIfxFxuenfeM3EJXPePhy/EsZKz+VI\nxe5iyQMmbi7fygF3OjO5PkbZJNzLIXD395A5ogkTED0Xsjo1/K9hD7XrvgIY0kAe\n984fZN+CYh4hIYdo6q5mgJ/5Kqt1wJAJPnE0744oW6PAz91uy1P/vicLrt9SaF7u\nVn7ReujuPC5fGoyLped0Zon1w7LmD08qXb4UC3EY96p0OihYsrKl5Uhv83bJ/pmr\na5OKVTxP6BFm+5zur+klcaVwXYDLAB8hg3eF9RMTyS+arwiHkVSuBc8qPLPaE6O1\nbohzaBFvAgMBAAECggEAOBqx8naGz/pUlHDdeCa1vvBqwUnoVotB7wM6cz01pWGx\nMHL6Rm2E9mbFpMLl0Ybt/qQwWji6ozKAAXsJy56HOeZOCw5tIAGgB20ch4PO6FnF\noaVqIYKXacf3ynTjEuYhrplMJcoT3fFTLDHXG9gSuqUZArmgsu0oOnurETDSPTC9\nOSQXe/XLOzffbiw6Boi5JMsSPRa+GolVwDUWEwPsQ/Fri/ctTvmdmpH3yggMGbLZ\nL3pohT3iMRntnmk/9U6MyrSEudnzR2cZ92dPoqwUmpZ8oN5GNthDw9OSd1t3F5xd\nKLZIIe/3j3vXIVBBSXgNPnt7ko8ntLMls8nf77oH0QKBgQDW9a9NKDNOhqWAmgQM\nlUodx5B1dycLBBSWhcXfP8EN3KnBmcqMTGzj2FSvgMWLgqlYFZfc5ySIL+py0NAg\nORAb5+HNN6F0ZFgBrrxGJtvt/fegfeQFNAEWpay8h7GKAxZfWhkPY4tI8DETpVly\nNeKH4LC6i93MXVS2DQlMFqK7mQKBgQDJfIVeT0YBZsE2yYIKIqI7p8j345r68FjA\nFftmSQMks+gRCmbHaPIqm9nZp/C2TEmyNyNWNQNgFPmtweOK+Td9dfe1bdZuU6vI\ntk/Ul4Gne06gP1dsgm5Vx1AUO+rBFwF/u+DllOUyGRgVlXtAGQIta+uqr8uo27xq\nJHXTBkyaRwKBgQCXIno0Z3VbWrP2bVM3fad0tKFO1Y2v4xiOlFOBGZQkqOb55aVR\na1KMB8fS9VjvM9jYw6XYfPNkhTvzqfkLDtPSqwBJhzmPWhW+aRqawCuVcyCtyJWP\nSvcQ8z819rnO7UjHldNUzIpbp/T5eSIgeN5i5ombP0ecrmom7ZeB1dBo0QKBgQCD\n3ec7jg53JFUYElH1aC1ddbZl5qSrz1mGfdyHWQmhn80mOfSCVgEIOfAeL3evF8az\nyLpr1U5cN94hBmBxuCHFDswMBdLtaf1n40nkDTRh9KXE4y/IaKTlpwiV9ZDyxqfI\nfaH3H7fRTfMhTS/ZB4URTSx0DZHw9b8eiLZEYj8ISQKBgQCEA1wETw6yLhWSpIIh\noATxOJgn92cpmwLPZQQTn/PzBTWK/c9Cx5Y3WsF6PmFUnveiOz4iDPgnKyImijc9\nkU2Z61QdIB7PTUxYeR4+wSPP8sBRZmSCdi/qsw/eTi+7YH44DLAnBUCeu7EHwo29\nynbL5pZpiFgbLuJBDAGkFMwsKw==\n-----END PRIVATE KEY-----\n",
+    "client_email": "tts-service-account@superb-garden-449619-k6.iam.gserviceaccount.com",
+    "client_id": "110313999251148488227",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/tts-service-account%40superb-garden-449619-k6.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
