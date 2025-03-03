@@ -1,8 +1,10 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {FaCloudUploadAlt} from "react-icons/fa";
+import useNavigationBlocker from "../hooks/UseNavigaionBlock";
 
 const UploadResume = ({getQuestions, uploadResume}) => {
+	useNavigationBlocker(true);
 	const [file, setFile] = useState(null);
 	const [dragActive, setDragActive] = useState(false);
 	const navigate = useNavigate();

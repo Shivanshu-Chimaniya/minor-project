@@ -1,28 +1,39 @@
 const makeQuestionPrompt = ({
 	level,
 	jobDescription,
-}) => `Generate 3 to 5 structured verbal interview questions for a ${level} role based on the following job description:  
-        ${jobDescription}  
-        **Requirements:**  
-        - Ensure the questions align with the **${level}** role, adjusting complexity accordingly:  
-        - **Junior:** Focus on fundamental coding concepts, basic problem-solving, and understanding of core data structures and algorithms.  
-        - **Mid-Level:** Include more in-depth problem-solving, real-world coding scenarios, and optimization techniques.  
-        - **Senior:** Emphasize advanced system design, scalability, architecture, and best coding practices.  
-        - Keep each question **short enough to be answered in under 1 minute**.  
-        - Focus primarily on **coding topics** that can be explained verbally, covering:  
-        - **Problem-solving & Algorithms**  
-        - **Data Structures**  
-        - **System Design (if applicable)**  
-        - **Coding Best Practices**  
-        - **Real-world Application Scenarios**  
-        Output Format (JSON): 
+}) => `Generate 3 to 5 unique and structured verbal interview questions for a ${level} role based on the following job description:Job Description:${jobDescription}
+        Requirements:
+        The questions should align with the ${level} role, adjusting complexity accordingly:
+            Junior: Focus on fundamental coding concepts, basic problem-solving, and core data structures & algorithms.
+            Mid-Level: Include in-depth problem-solving, real-world coding scenarios, and optimization techniques.
+            Senior: Emphasize advanced system design, scalability, architecture, and best coding practices.
+
+        Ensure each question is unique and not repeated across multiple requests. Avoid common, overused interview questions.
+        Phrase each question differently in every response while maintaining clarity.
+        Keep each question short enough to be answered in under 1 minute.
+        Focus primarily on coding topics that can be explained verbally, covering:
+        Problem-solving & Algorithms
+        Data Structures
+        System Design (if applicable)
+        Coding Best Practices
+        Real-world Application Scenarios
+        
+        Introduce variation in question structure, such as:
+        Scenario-based questions
+        "What if..." questions
+        Comparative questions
+        Code analysis or debugging questions
+        Edge-case considerations
+        Trade-off discussions
+        
+        Output Format (JSON):
         {
             "questions": [
-                "Question 1",
-                "Question 2",
-                "Question 3",
-                "Question 4",
-                "Question 5"
+                "Unique Question 1",
+                "Unique Question 2",
+                "Unique Question 3",
+                "Unique Question 4",
+                "Unique Question 5"
             ]
         }`;
 
@@ -55,65 +66,55 @@ const makeResumePrompt = ({
 const makeAnwserFeedbackPrompt = ({
 	question,
 	answer,
-}) => `I would like to evaluate my interview answers in a fair and constructive manner. Please provide feedback with a positive and supportive approach, acknowledging that minor transcription errors may occur but do not significantly affect the meaning. The focus should be on the overall quality of the response rather than minor typos.
+}) => `I am evaluating an interview response based on the given question and answer. Please ensure fairness in scoring while maintaining a positive and professional tone. Follow these strict grading rules:
+        Zero Score Criteria:
+        If the answer is empty, completely nonsensical, or entirely unrelated to the question, assign a score of 0.0 and provide feedback stating that the response does not meet the minimum relevance criteria.
 
-        Question:
-        ${question}
+        Scoring Guidelines for Relevant Answers:
+        If the answer is somewhat relevant but lacks depth or clarity, provide a low to mid score (1.0 - 6.0) with brief constructive feedback.
+        If the answer mostly covers the topic but has minor flaws, provide a higher score (7.0 - 9.0) while highlighting strengths and areas of improvement.
+        If the answer is comprehensive and well-structured, give it full or near-full marks (9.0 - 10.0) and acknowledge its quality.
 
-        Answer:
-        ${answer}
+        Response Requirements:
+        Point out mistakes directly without over-explaining.
+        If no major mistakes exist, highlight positive aspects.
+        Provide a potential perfect answer for comparison.
+        Keep feedback concise, structured, and free from unnecessary details.
 
-        Evaluation Criteria:
+        Evaluation:
 
-        Accuracy: Is the response factually correct, even if minor errors are present?
+        Question: ${question}, 
+        Candidate's Answer: ${answer}
 
-        Completeness: Does it fully address all aspects of the question?
-
-        Clarity: Is the answer well-structured and easy to follow?
-
-        Relevance: Does it directly respond to the question in a meaningful way?
-
-        Output Format (JSON)
-
-        Please respond strictly in the following JSON format:
-
+        Response Format (JSON Output):
         {
         "score": X.X,
-        "feedback": "Encouraging and constructive feedback highlighting strengths and areas for improvement.",
-        "perfect_answer": "An ideal version of the answer for reference."
-        }`;
+        "feedback": "Brief feedback pointing out mistakes or appreciation.",
+        "perfect_answer": "The potential perfect answer."
+        }
+        `;
 const makeOverallFeedbackPrompt = ({
 	questions,
 	answers,
-}) => `I am evaluating my interview performance based on my responses to the given questions. 
-        Please keep a positive tone in your response, show some grace when providing scores, and assign an overall score out of 10.0 based on the quality of the answers.  
-        Empty string means no answer is provided and it is intolerable.  
-
-        Questions:  
-        ${questions}  
-
-        Candidate's Answers:  
-        ${answers}  
-
-        Evaluation Criteria:  
-
-        - Assess the candidate's performance holistically rather than on a per-question basis.  
-        - Identify overall strengths observed across multiple answers.  
-        - Point out weaknesses concisely without over-explaining.  
-        - Show grace when giving scores, but ensure they reflect the overall quality of the responses.  
-        - Keep the feedback brief and to the point.  
-        - Do not generate unnecessary information or make up details.  
-        - Provide a final verdict concisely summarizing the candidate's performance.  
-
-        Response Format (JSON Output):  
-        {
-            "evaluation": {
-                "strengths": ["List key strengths observed in responses."],
-                "weaknesses": ["List specific areas where improvement is needed."],
-                "overall_score": X.X,
-                "final_verdict": "Concise summary of the candidate's performance."
-            }
-        }`;
+}) => `I want a concise yet comprehensive evaluation of my interview performance based on my answers. Maintain a positive tone while being fair in scoring. Keep feedback direct and constructive.
+        Instructions: 
+        Assign a score out of 10 for each answer, ensuring it reflects quality while showing grace. 
+        If an answer is missing (empty string), note it as intolerable and assign a score of 0.
+        Identify key strengths concisely. 
+        List specific weaknesses without over-explaining. 
+        Provide a brief and to-the-point final verdict. 
+        Avoid unnecessary details or assumptions. 
+        Input Data: 
+            Questions: ${questions} 
+            My Answers: ${answers} 
+        Output Format (JSON): 
+        { "evaluation": 
+    { "strengths": ["Key strengths observed."], 
+        "weaknesses": ["Specific areas needing improvement."], 
+        "overall_score": X.X, 
+        "final_verdict": "Concise summary of overall performance." 
+    } 
+}`;
 
 module.exports = {
 	makeAnwserFeedbackPrompt,

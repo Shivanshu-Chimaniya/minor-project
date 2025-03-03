@@ -125,7 +125,11 @@ app.post("/getoverallresult", async (req, res) => {
 	const {questions, answers} = req.body;
 	if (typeof questions == "undefined" || typeof answers == "undefined") {
 		res.status(400).send(JSON.stringify("Wrong Input"));
+		return null;
 	}
+
+	console.log(questions);
+	console.log(answers);
 
 	const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
 	const prompt = makeOverallFeedbackPrompt({questions, answers});

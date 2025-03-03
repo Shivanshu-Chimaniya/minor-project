@@ -166,7 +166,7 @@ const FeedbackSummaryPage = ({
 										score={
 											dataReady.technicalOverview
 												? overallResult.evaluation
-														.overall_score / 10
+														.overall_score
 												: 0
 										}
 										isLoading={!dataReady.technicalOverview}

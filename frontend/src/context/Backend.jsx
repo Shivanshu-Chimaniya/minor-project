@@ -60,6 +60,8 @@ export const BackendProvider = (props) => {
 			return null;
 		}
 		try {
+			let temp = Object.values(answers);
+
 			const response = await fetch(`${backendURL}/getoverallresult`, {
 				method: "POST",
 				headers: {
@@ -67,7 +69,7 @@ export const BackendProvider = (props) => {
 				},
 				body: JSON.stringify({
 					questions,
-					answers,
+					answers: temp,
 				}),
 			});
 			if (!response.ok) {
