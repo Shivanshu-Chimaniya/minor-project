@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import React from "react";
-import {useBackend} from "../context/Backend";
+import {useBackend} from "../context/BackendContext";
 
 const VideoScreening = ({
 	questions,

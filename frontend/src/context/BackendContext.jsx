@@ -1,9 +1,11 @@
-import React, {createContext, useContext} from "react";
+import React, {createContext, useContext, useState} from "react";
 
 const backendContext = createContext(null);
-const backendURL = "http://localhost:8080";
+const backendURL = "http://localhost:8080/interview";
 
 export const BackendProvider = (props) => {
+	const [token, setToken] = useState(localStorage.getItem("token"));
+
 	const getQuestions = async (level, jobDescription) => {
 		if (
 			typeof level == "undefined" ||
@@ -15,6 +17,7 @@ export const BackendProvider = (props) => {
 		const response = await fetch(`${backendURL}/getquestions`, {
 			method: "POST",
 			headers: {
+				Authorization: `bearer ${token}`,
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
@@ -40,6 +43,10 @@ export const BackendProvider = (props) => {
 		try {
 			const response = await fetch(`${backendURL}/uploadresume`, {
 				method: "POST",
+				headers: {
+					Authorization: `bearer ${token}`,
+					"Content-Type": "application/json",
+				},
 				body: formData,
 			});
 			if (!response.ok) {
@@ -65,6 +72,7 @@ export const BackendProvider = (props) => {
 			const response = await fetch(`${backendURL}/getoverallresult`, {
 				method: "POST",
 				headers: {
+					Authorization: `bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
@@ -92,6 +100,7 @@ export const BackendProvider = (props) => {
 			const response = await fetch(`${backendURL}/getanswerfeedback`, {
 				method: "POST",
 				headers: {
+					Authorization: `bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
@@ -115,7 +124,10 @@ export const BackendProvider = (props) => {
 		try {
 			const response = await fetch(`${backendURL}/getaudio`, {
 				method: "POST",
-				headers: {"Content-Type": "application/json"},
+				headers: {
+					Authorization: `bearer ${token}`,
+					"Content-Type": "application/json",
+				},
 				body: JSON.stringify({text: question}),
 			});
 
@@ -124,6 +136,7 @@ export const BackendProvider = (props) => {
 			const blob = await response.blob();
 			const audioURL = URL.createObjectURL(blob);
 			const audio = new Audio(audioURL);
+			console.log(audio);
 			return audio;
 		} catch (error) {
 			console.error("Error:", error);

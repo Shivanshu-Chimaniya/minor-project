@@ -7,10 +7,18 @@ import UploadResume from "./pages/UploadResume";
 import VideoScreening from "./pages/VideoScreening";
 import Summary from "./pages/Summary";
 import {useState} from "react";
-import {useBackend} from "./context/Backend";
+import {useBackend} from "./context/BackendContext";
+
+import {AuthProvider, useAuth} from "./context/AuthContext";
+import Login from "./pages/Login";
+import Profile from "./pages/ProfilePage";
+import RegisterPage from "./pages/Register";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import RefrshHandler from "./pages/RefreshHandler.jsx";
 
 function App() {
 	const backend = useBackend();
+	const auth = useAuth();
 	const [questions, setQuestions] = useState([]);
 	const [questionAudio, setQuestionAudio] = useState([]);
 
@@ -72,53 +80,59 @@ function App() {
 	};
 
 	return (
-		<BrowserRouter>
-			<Routes>
-				<Route path="/" element={<Layout />}>
-					<Route index element={<LandingPage />} />
-					<Route
-						path="selectinterview"
-						element={
-							<InterviewSelection
-								startInterview={startInterview}
+		<AuthProvider>
+			<BrowserRouter>
+				<RefrshHandler setIsAuthenticated={auth.setIsAuthenticated} />
+				<Routes>
+					<Route path="/" element={<Layout />}>
+						<Route path="/login" element={<Login />} />
+
+						<Route path="/register" element={<RegisterPage />} />
+						<Route index element={<LandingPage />} />
+						<Route
+							path="selectinterview"
+							element={
+								<InterviewSelection
+									startInterview={startInterview}
+								/>
+							}
+						/>
+						<Route path="interview" element={<ProtectedRoute />}>
+							<Route
+								index
+								element={
+									<UploadResume uploadResume={uploadResume} />
+								}
 							/>
-						}
-					/>
-					<Route path="interview">
-						<Route
-							index
-							element={
-								<UploadResume uploadResume={uploadResume} />
-							}
-						/>
-						<Route
-							path="videoscreening"
-							element={
-								<VideoScreening
-									questions={questions}
-									completeInterview={completeInterview}
-									questionAudio={questionAudio}
-									saveAnswer={saveAnswer}
-								/>
-							}
-						/>
-						<Route
-							path="summary"
-							element={
-								<Summary
-									questions={questions}
-									answers={answers}
-									overallResult={overallResult}
-									resumeResult={resumeResult}
-									feedbacks={feedbacks}
-								/>
-							}
-						/>
+							<Route
+								path="videoscreening"
+								element={
+									<VideoScreening
+										questions={questions}
+										completeInterview={completeInterview}
+										questionAudio={questionAudio}
+										saveAnswer={saveAnswer}
+									/>
+								}
+							/>
+							<Route
+								path="summary"
+								element={
+									<Summary
+										questions={questions}
+										answers={answers}
+										overallResult={overallResult}
+										resumeResult={resumeResult}
+										feedbacks={feedbacks}
+									/>
+								}
+							/>
+						</Route>
+						<Route path="*" element={<NoPage />} />
 					</Route>
-					<Route path="*" element={<NoPage />} />
-				</Route>
-			</Routes>
-		</BrowserRouter>
+				</Routes>
+			</BrowserRouter>
+		</AuthProvider>
 	);
 }
 

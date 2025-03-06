@@ -1,11 +1,14 @@
 import {Outlet} from "react-router-dom";
-import {useState, useEffect, useRef} from "react";
+import {useState, useEffect, useRef, useContext} from "react";
 import {useNavigate} from "react-router-dom";
+import AuthContext from "../context/AuthContext";
+import Navbar from "../components/Navbar";
 
 const Layout = () => {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const navigate = useNavigate();
 	const sidebarRef = useRef(null);
+	const {isAuthenticated, logout} = useContext(AuthContext);
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -33,30 +36,18 @@ const Layout = () => {
 		setIsSidebarOpen(false);
 	};
 
+	const handleLogout = () => {
+		navigate("/");
+		setIsSidebarOpen(false);
+		logout();
+	};
+
 	return (
 		<div className="min-h-screen flex flex-col">
-			<nav className="bg-gray-800 text-white p-4">
-				<div className="flex justify-between items-center">
-					{/* Logo */}
-					<div className="text-2xl font-bold">
-						{/* Menu Button */}
-						<button
-							onClick={toggleSidebar}
-							aria-label="toggle-sidebar"
-							className="bg-transparent border-none text-white cursor-pointer p-2">
-							☰
-						</button>
-						InterviewPrep AI
-					</div>
-
-					{/* Action Button */}
-					<button
-						className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-md transition-colors duration-300"
-						onClick={() => handleNavigation("/selectinterview")}>
-						Get Started
-					</button>
-				</div>
-			</nav>
+			<Navbar
+				toggleSidebar={toggleSidebar}
+				handleNavigation={handleNavigation}
+			/>
 
 			{/* Sidebar */}
 			{isSidebarOpen && (
@@ -89,6 +80,30 @@ const Layout = () => {
 							onClick={() => handleNavigation("/about")}>
 							About
 						</li>
+						{isAuthenticated ? (
+							<>
+								<li
+									className="py-2 cursor-pointer"
+									onClick={() => handleLogout()}>
+									Logout
+								</li>
+							</>
+						) : (
+							<>
+								<li
+									className="py-2 cursor-pointer"
+									onClick={() => handleNavigation("/login")}>
+									Login
+								</li>
+								<li
+									className="py-2 cursor-pointer"
+									onClick={() =>
+										handleNavigation("/register")
+									}>
+									Register
+								</li>
+							</>
+						)}
 					</ul>
 				</div>
 			)}

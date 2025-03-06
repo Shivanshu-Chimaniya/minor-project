@@ -1,9 +1,12 @@
 import {useNavigate} from "react-router-dom";
-import {useState} from "react";
+import {useState, useContext} from "react";
+import AuthContext from "../context/AuthContext"; // Assuming this is the path to your AuthContext
 import JobCard from "../components/JobCard";
+import {FaExclamationTriangle} from "react-icons/fa";
 
 const InterviewSelection = ({startInterview}) => {
 	const navigate = useNavigate();
+	const {isAuthenticated} = useContext(AuthContext); // Get isAuthenticated from AuthContext
 
 	const [jobLevel, setJobLevel] = useState(1);
 	const [jobDescription, setJobDescription] = useState("");
@@ -44,6 +47,10 @@ const InterviewSelection = ({startInterview}) => {
 
 	const handleJobSubmit = (e) => {
 		e.preventDefault();
+		if (!isAuthenticated) {
+			alert("Please log in to submit a job description.");
+			return;
+		}
 		if (jobDescription.length > 2000) {
 			alert("Job description must be under 2000 characters.");
 			return;
@@ -52,11 +59,19 @@ const InterviewSelection = ({startInterview}) => {
 	};
 
 	const handleStartInterview = (level, jobDescription) => {
+		if (!isAuthenticated) {
+			alert("Please log in to start an interview.");
+			return;
+		}
 		startInterview(level, jobDescription);
 		navigate("/interview");
 	};
 
 	const tryInterview = (index) => {
+		if (!isAuthenticated) {
+			alert("Please log in to start an interview.");
+			return;
+		}
 		handleStartInterview(
 			interviewTypes[index].level,
 			interviewTypes[index].description
@@ -64,6 +79,10 @@ const InterviewSelection = ({startInterview}) => {
 	};
 
 	const handleStartPredefinedInterview = () => {
+		if (!isAuthenticated) {
+			alert("Please log in to start an interview.");
+			return;
+		}
 		if (selectedJobIndex !== null) {
 			const jobDetails = interviewTypes[selectedJobIndex];
 			const level = jobDetails.level;
@@ -94,7 +113,7 @@ const InterviewSelection = ({startInterview}) => {
 								className="cursor-pointer transform transition-transform duration-300 hover:scale-102">
 								<JobCard
 									index={index}
-									jobDetails={interviewTypes[index]}
+									jobDetails={interview}
 									tryInterview={tryInterview}
 									isSelected={selectedJobIndex === index}
 								/>
@@ -123,11 +142,13 @@ const InterviewSelection = ({startInterview}) => {
 											.description
 									}
 								</p>
-								<button
-									onClick={handleStartPredefinedInterview}
-									className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-300 transform hover:scale-105">
-									Start This Interview
-								</button>
+								{isAuthenticated && (
+									<button
+										onClick={handleStartPredefinedInterview}
+										className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-300 transform hover:scale-105">
+										Start This Interview
+									</button>
+								)}
 							</>
 						)}
 					</div>
@@ -181,13 +202,25 @@ const InterviewSelection = ({startInterview}) => {
 									maxLength={2000}
 									rows="5"
 									className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-300"
-									placeholder="Describe the job requirements and responsibilities..."></textarea>
+									placeholder={
+										isAuthenticated
+											? "Describe the job requirements and responsibilities..."
+											: "Please log in to add a job description"
+									}
+									disabled={!isAuthenticated}></textarea>
 							</div>
 
 							<button
 								type="submit"
-								className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-md transition-all duration-300 w-full transform hover:scale-105 hover:shadow-lg">
-								Submit Job
+								className={`${
+									isAuthenticated
+										? "bg-green-600 hover:bg-green-700"
+										: "bg-gray-400 cursor-not-allowed"
+								} text-white font-medium py-3 px-6 rounded-md transition-all duration-300 w-full transform hover:scale-105 hover:shadow-lg`}
+								disabled={!isAuthenticated}>
+								{isAuthenticated
+									? "Submit Job"
+									: "Log In to Submit"}
 							</button>
 						</form>
 					</div>

@@ -1,9 +1,20 @@
 import {useNavigate} from "react-router-dom";
-import {useBackend} from "../context/Backend";
+import {useBackend} from "../context/BackendContext";
+import {useContext} from "react";
+import AuthContext from "../context/AuthContext";
 
 const LandingPage = () => {
 	const navigate = useNavigate();
 	const backend = useBackend();
+	const auth = useContext(AuthContext);
+	const handleLogout = () => {
+		if (!auth.isAuthenticated) {
+			console.log("no user logged in");
+			console.log(localStorage.getItem("token"));
+		} else {
+			auth.logout();
+		}
+	};
 
 	return (
 		<div>
