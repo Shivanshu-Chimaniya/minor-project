@@ -1,48 +1,84 @@
 import {createContext, useState, useEffect, useContext, useRef} from "react";
+import axios from "axios";
+import {showToast} from "../utils/toast";
 
 const AuthContext = createContext();
-const backendURL = "http://localhost:8080/auth";
+const backendURL = `${meta.env.VITE_BACKENDURL}/auth`;
 
 export const AuthProvider = ({children}) => {
 	const [loading, setLoading] = useState(true);
 	const [token, setToken] = useState(localStorage.getItem("token"));
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [user, setUser] = useState(null);
 	const hasCheckedToken = useRef(false);
 
-	const handleSetToken = (token) => {
-		if (token === null) {
-			setToken(token);
+	// Axios instance with default headers
+	const axiosInstance = axios.create({
+		baseURL: backendURL,
+		headers: {"Content-Type": "application/json"},
+		timeout: 10000, // 10 seconds timeout
+	});
+
+	// Set token in headers dynamically
+	axiosInstance.interceptors.request.use((config) => {
+		const authToken = localStorage.getItem("token");
+		if (authToken) {
+			config.headers.Authorization = `Bearer ${authToken}`;
+		}
+		return config;
+	});
+
+	// Global error handling for authentication
+	axiosInstance.interceptors.response.use(
+		(response) => response,
+		(error) => {
+			if (error.response?.status === 401) {
+				showToast.error("Session expired. Logging out...");
+				logout();
+			}
+			return Promise.reject(error);
+		}
+	);
+
+	// Function to set token
+	const handleSetToken = (newToken) => {
+		if (!newToken) {
+			setToken(null);
+			setIsAuthenticated(false);
+			setUser(null);
 			localStorage.removeItem("token");
+			localStorage.removeItem("user-info");
 			return;
 		}
-		setToken(token);
-		localStorage.setItem("token", token);
+		setToken(newToken);
+		localStorage.setItem("token", newToken);
 	};
 
+	// Check if token is valid
 	useEffect(() => {
 		const checkToken = async () => {
-			if (!token || hasCheckedToken.current || token === null) {
+			if (!token || hasCheckedToken.current) {
 				setLoading(false);
 				return;
 			}
-
 			hasCheckedToken.current = true;
-			let url = `${backendURL}/login`;
 
 			try {
-				let response = await fetch(url, {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-				console.log(response);
-				if (!response.ok) throw new Error("fetch user failed");
-				let result = await response.json();
-				if (result.user) setIsAuthenticated(true);
+				const response = await axiosInstance.get("/login");
+				if (response.data.user) {
+					setIsAuthenticated(true);
+					setUser(response.data.user);
+					localStorage.setItem(
+						"user-info",
+						JSON.stringify(response.data.user)
+					);
+					// showToast.success("Welcome back!");
+				}
 			} catch (error) {
-				console.error("Error checking token:", error);
+				showToast.error(
+					"Session validation failed. Please log in again."
+				);
+				handleSetToken(null);
 			} finally {
 				setLoading(false);
 			}
@@ -51,112 +87,106 @@ export const AuthProvider = ({children}) => {
 		checkToken();
 	}, [token]);
 
-	const register = async (username, email, password) => {
+	// Register function
+	const register = async (formData) => {
 		try {
-			const res = await fetch(`${backendURL}/register`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({username, email, password}),
-			});
-
-			const data = await res.json();
-			if (!res.ok) {
-				alert(data.message);
-				console.log(data.message);
-				throw new Error("Registration failed");
-			}
-
+			const {data} = await axiosInstance.post("/register", formData);
 			if (data.token) {
 				handleSetToken(data.token);
 				setIsAuthenticated(true);
-				return {
-					success: true,
-					message: "Registration successful. You are now logged in.",
-				};
-			} else {
-				return {
-					success: false,
-					message: "Registration successful, but no token received.",
-				};
+				showToast.success("Registration successful!");
 			}
+			return {success: true, message: "Registration successful"};
 		} catch (error) {
-			console.error("Registration error:", error);
-			return {
-				success: false,
-				message: "Registration failed. Please try again.",
-			};
+			const errorMessage =
+				error.response?.data?.message || "Registration failed";
+			showToast.error(errorMessage);
+			return {success: false, message: errorMessage};
 		}
 	};
 
+	// Login function
 	const login = async (email, password) => {
 		try {
-			const res = await fetch(`${backendURL}/login`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({email, password}),
+			const {data} = await axiosInstance.post("/login", {
+				email,
+				password,
 			});
-
-			const data = await res.json();
-			if (!res.ok) {
-				alert(data.message);
-				console.log(data.message);
-				throw new Error("Login failed");
-			}
-
-			localStorage.setItem("token", data.token);
 			handleSetToken(data.token);
 			setIsAuthenticated(true);
+			showToast.success("Login successful!");
 			return true;
 		} catch (error) {
-			console.error("Login error:", error);
+			showToast.error("Invalid credentials. Please try again.");
 			return false;
 		}
 	};
 
+	// Logout function
 	const logout = () => {
-		localStorage.removeItem("token");
 		handleSetToken(null);
 		setIsAuthenticated(false);
+		showToast.info("Logged out successfully.");
 	};
 
+	// Google OAuth login
 	const responseGoogle = async (authResult) => {
 		try {
-			if (authResult["code"]) {
-				const response = await fetch(
-					`${backendURL}/google?code=${authResult["code"]}`
+			if (authResult.code) {
+				const {data} = await axiosInstance.get(
+					`/google?code=${authResult.code}`
 				);
-				const result = await response.json();
-
-				if (!response.ok)
-					throw new Error(result.message || "Google login failed");
-
-				const {email, username} = result.user;
-				const token = result.token;
-
-				// Store token & user data
-				handleSetToken(token);
+				handleSetToken(data.token);
 				localStorage.setItem(
 					"user-info",
-					JSON.stringify({email, username})
+					JSON.stringify({
+						email: data.user.email,
+						username: data.user.username,
+					})
 				);
-
-				// Update authentication state
 				setIsAuthenticated(true);
-
+				showToast.success("Google login successful!");
 				return {success: true, message: "Google login successful"};
 			} else {
 				throw new Error("Invalid Google authentication response");
 			}
 		} catch (e) {
-			console.error("Error during Google Login:", e);
+			showToast.error("Google login failed. Please try again.");
+			return {success: false, message: "Google login failed"};
+		}
+	};
+
+	// Verify email token
+	const verifyToken = async (verificationToken) => {
+		try {
+			if (!verificationToken)
+				throw new Error("Invalid verification token");
+
+			const {data} = await axiosInstance.get(
+				`/verify-email?token=${verificationToken}`
+			);
+			showToast.success(data.message || "Email verified successfully!");
 			return {
-				success: false,
-				message: "Google login failed. Please try again.",
+				success: true,
+				message: data.message || "Email verified successfully",
 			};
+		} catch (e) {
+			showToast.error("Verification failed. Please try again.");
+			return {success: false, message: "Verification failed"};
+		}
+	};
+
+	// Get user details
+	const getUser = async () => {
+		try {
+			const {data} = await axiosInstance.get("/profile");
+			if (data.success) {
+				return data.user;
+			}
+			return data;
+		} catch (error) {
+			showToast.error("Failed to fetch user details.");
+			return null;
 		}
 	};
 
@@ -170,6 +200,9 @@ export const AuthProvider = ({children}) => {
 				responseGoogle,
 				setIsAuthenticated,
 				isAuthenticated,
+				verifyToken,
+				getUser,
+				user,
 			}}>
 			{children}
 		</AuthContext.Provider>

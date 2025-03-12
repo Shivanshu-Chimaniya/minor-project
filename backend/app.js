@@ -9,6 +9,7 @@ dotenv.config();
 
 const authRoutes = require("./routes/auth");
 const interviewRoutes = require("./routes/interview");
+const profileRoutes = require("./routes/profile");
 
 const app = express();
 
@@ -29,7 +30,7 @@ app.use(passport.initialize());
 require("./config/passport")(passport);
 app.use(passport.session());
 
-const MONGO_URL = "mongodb://localhost:27017/interview1";
+const MONGO_URL = "mongodb://localhost:27017/interview";
 mongoose
 	.connect(process.env.MONGO_URL || MONGO_URL)
 	.then(() => console.log("MongoDB connected"))
@@ -42,14 +43,12 @@ app.use("/", (req, res, next) => {
 
 app.use("/auth", authRoutes);
 app.use("/interview", interviewRoutes);
+app.use("/profile", profileRoutes);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
-	console.error(err.stack);
-	res.status(500).json({message: "Something went wrong!"});
+	res.status(500).json({message: err.message || "Internal Server Error"});
 });
 
-// Port configuration
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`);

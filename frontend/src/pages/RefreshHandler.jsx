@@ -1,23 +1,29 @@
 import React, {useEffect} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 
-function RefrshHandler({setIsAuthenticated}) {
+function RefrshHandler({isAuthenticated}) {
 	const location = useLocation();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		const data = localStorage.getItem("user-info");
-		const token = JSON.parse(data)?.token;
-		if (token) {
-			setIsAuthenticated(true);
+		if (isAuthenticated) {
 			if (
 				location.pathname === "/login" ||
 				location.pathname === "/register"
 			) {
 				navigate("/", {replace: false});
 			}
+		} else if (isAuthenticated === false) {
+			if (
+				location.pathname === "/profile" ||
+				location.pathname === "/interview" ||
+				location.pathname === "/interview/videoscreening" ||
+				location.pathname === "/interview/summary"
+			) {
+				navigate("/", {replace: false});
+			}
 		}
-	}, [location, navigate, setIsAuthenticated]);
+	}, [location, navigate, isAuthenticated]);
 
 	return null;
 }

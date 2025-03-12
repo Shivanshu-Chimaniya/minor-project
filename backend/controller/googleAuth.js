@@ -1,23 +1,33 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
 const {google} = require("googleapis");
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
 const oauth2Client = new google.auth.OAuth2(
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET,
+	process.env.GOOGLE_CLIENT_ID,
+	process.env.GOOGLE_CLIENT_SECRET,
 	"postmessage"
 );
 
-/* GET Google Authentication API. */
-exports.googleAuth = async (req, res, next) => {
-	const code = req.query.code;
+/**
+ * @route POST /auth/google
+ * @desc Logs in or signs up a user using Google OAuth
+ * @access Public
+ */
+module.exports.LoginOrSignupWithGoogle = async (req, res, next) => {
 	try {
+		const code = req.query.code;
+		if (!code) {
+			return res.status(400).json({
+				success: false,
+				message: "Authorization code is required.",
+			});
+		}
+
+		// Exchange authorization code for access token
 		const googleRes = await oauth2Client.getToken(code);
 		oauth2Client.setCredentials(googleRes.tokens);
+
+		// Fetch user info from Google API
 		const response = await fetch(
 			`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`,
 			{
@@ -27,29 +37,70 @@ exports.googleAuth = async (req, res, next) => {
 				},
 			}
 		);
-		const userRes = await response.json();
-		const {email, name: username} = userRes;
-		let user = await User.findOne({email});
 
-		if (!user) {
-			user = await User.create({
-				username,
-				email,
+		if (!response.ok) {
+			return res.status(502).json({
+				success: false,
+				message: "Failed to fetch user data from Google.",
 			});
 		}
-		const {_id} = user;
+
+		const userRes = await response.json();
+		const {email, name, verified_email, picture} = userRes;
+
+		if (!email) {
+			return res.status(400).json({
+				success: false,
+				message: "Google account does not provide an email.",
+			});
+		}
+
+		let user = await User.findOne({email});
+
+		// If user does not exist, create a new account
+		if (!user) {
+			user = new User({
+				username: email,
+				name,
+				email,
+				isEmailVerified: verified_email,
+				profileImage: picture,
+			});
+
+			try {
+				await user.save();
+			} catch (err) {
+				console.log(err);
+				return res.status(500).json({
+					success: false,
+					message: "Error saving user to the database.",
+				});
+			}
+		}
+
+		// Generate JWT token
 		const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {
-			expiresIn: "24h",
+			expiresIn: process.env.JWT_TIMEOUT,
 		});
-		res.status(200).json({
-			message: "success",
+
+		// Respond with success
+		return res.status(200).json({
+			success: true,
+			message: "User successfully authenticated.",
 			token,
-			user,
+			user: {
+				id: user._id,
+				name: user.name,
+				email: user.email,
+				isEmailVerified: user.isEmailVerified,
+				profileImage: user.profileImage,
+			},
 		});
-	} catch (err) {
-		console.log(err);
-		res.status(500).json({
-			message: "Internal Server Error",
+	} catch (error) {
+		console.error("Google OAuth error:", error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error during authentication.",
 		});
 	}
 };

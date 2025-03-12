@@ -1,114 +1,103 @@
-import React, {useContext} from "react";
-import AuthContext from "../context/AuthContext";
+import React, {useState} from "react";
+import {useAuth} from "../context/AuthContext";
+import {showToast} from "../utils/toast";
+import {useNavigate} from "react-router-dom";
 
 const JobCard = ({jobDetails, tryInterview, index, isSelected}) => {
-	const {isAuthenticated} = useContext(AuthContext);
+	const {isAuthenticated} = useAuth();
+	const navigate = useNavigate();
+	const [expanded, setExpanded] = useState(false);
+
+	// Determine if card should be expanded (on small screens when selected)
+	const shouldExpand = isSelected && window.innerWidth < 640;
+
+	// Toggle expanded state for smaller screens
+	const toggleExpand = () => {
+		if (window.innerWidth < 640) {
+			setExpanded(!expanded);
+		}
+	};
 
 	return (
 		<div
-			className={`max-w-sm rounded-lg overflow-hidden shadow-lg bg-white border border-gray-200 hover:shadow-xl transition-shadow duration-300 flex flex-col h-full ${
-				isSelected ? "border-blue-500" : "border-gray-200"
-			}`}>
-			<div className="px-6 pt-4 pb-2">
-				<div className="flex items-center justify-between mb-2">
-					<h3 className="font-bold text-xl text-gray-800">
+			className={`max-w-sm rounded-lg overflow-hidden shadow-lg 
+        bg-white dark:bg-gray-800 
+        border transition-shadow duration-300 flex flex-col h-full
+        ${
+			isSelected
+				? "border-blue-500 dark:border-blue-400 shadow-xl"
+				: "border-gray-200 dark:border-gray-700 hover:shadow-xl"
+		} ${shouldExpand || expanded ? "sm:h-auto" : "h-full"}`}
+			onClick={toggleExpand}>
+			<div className="px-4 pt-3 pb-2">
+				<div className="flex flex-wrap items-center justify-between mb-2">
+					<h3 className="font-bold text-lg mb-1 text-gray-800 dark:text-[#e2e8f0] line-clamp-1 text-ellipsis">
 						{jobDetails.title}
 					</h3>
-					<span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 uppercase">
+					<span
+						className="px-2 py-1 text-xs font-semibold rounded-full 
+            bg-blue-100 dark:bg-blue-900 
+            text-blue-800 dark:text-blue-200 uppercase text-nowrap">
 						{jobDetails.level}
 					</span>
 				</div>
 			</div>
-			<div className="px-6 py-2">
-				<div className="flex items-center mb-3 text-gray-500 text-sm">
-					<svg
-						className="h-4 w-4 mr-1"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
-						/>
-					</svg>
-					<span>AI/ML Department</span>
-				</div>
-				<div className="flex items-center mb-4 text-gray-500 text-sm">
-					<svg
-						className="h-4 w-4 mr-1"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-						/>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-						/>
-					</svg>
-					<span>Remote Available</span>
-				</div>
-				<p className="text-gray-600 text-sm mb-4 line-clamp-3">
+
+			{/* Description - always visible */}
+			<div className="px-4 py-2">
+				<p
+					className={`text-gray-600 dark:text-gray-300 text-sm mb-4 
+          ${shouldExpand || expanded ? "" : "line-clamp-3"}`}>
 					{jobDetails.description}
 				</p>
-				<div className="flex flex-wrap gap-2 mb-4">
-					<span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-						Python
-					</span>
-					<span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-						TensorFlow
-					</span>
-					<span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-						PyTorch
-					</span>
-					<span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
-						ML Pipelines
-					</span>
+
+				{/* Additional content - visible only when expanded on small screens */}
+				{(shouldExpand || expanded) && (
+					<>
+						{jobDetails.features &&
+							jobDetails.features.map((el) => (
+								<div className="flex items-center mb-4 text-gray-500 dark:text-gray-400 text-sm">
+									<span>{el}</span>
+								</div>
+							))}
+
+						<div className="flex flex-wrap gap-2 mb-4">
+							{jobDetails.tags &&
+								jobDetails.tags.map((el) => (
+									<span
+										className="px-2 py-1 text-xs 
+									bg-gray-100 dark:bg-gray-700 
+									text-gray-800 dark:text-gray-200 rounded">
+										{el}
+									</span>
+								))}
+						</div>
+					</>
+				)}
+			</div>
+
+			{isAuthenticated && (
+				<div className="mt-auto px-4 pb-4">
+					<button
+						onClick={(e) => {
+							e.stopPropagation(); // Prevent card expansion when clicking the button
+							if (isAuthenticated) {
+								tryInterview(index);
+							} else {
+								showToast.error(
+									"Please log in to start an interview."
+								);
+							}
+						}}
+						className={`py-1 px-4 ${
+							isAuthenticated
+								? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+								: "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+						} text-white font-medium rounded-md shadow-sm transition-colors duration-200 flex items-center justify-center space-x-1`}>
+						<span>Start</span>
+					</button>
 				</div>
-			</div>
-			<div className="mt-auto px-6 pb-4">
-				<button
-					onClick={() => {
-						if (isAuthenticated) {
-							tryInterview(index);
-						} else {
-							alert("Please log in to start an interview.");
-						}
-					}}
-					disabled={!isAuthenticated}
-					className={`w-full py-2 px-4 ${
-						isAuthenticated
-							? "bg-indigo-600 hover:bg-indigo-700"
-							: "bg-gray-400 cursor-not-allowed"
-					} text-white font-medium rounded-md shadow-sm transition-colors duration-200 flex items-center justify-center space-x-1`}>
-					<span>
-						{isAuthenticated ? "Try Interview" : "Log In to Start"}
-					</span>
-					{isAuthenticated && (
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-4 w-4"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor">
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M14 5l7 7m0 0l-7 7m7-7H3"
-							/>
-						</svg>
-					)}
-				</button>
-			</div>
+			)}
 		</div>
 	);
 };

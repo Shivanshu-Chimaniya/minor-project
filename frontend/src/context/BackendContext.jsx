@@ -1,146 +1,155 @@
 import React, {createContext, useContext, useState} from "react";
+import axios from "axios";
 
 const backendContext = createContext(null);
-const backendURL = "http://localhost:8080/interview";
+const backendURL = `${meta.env.VITE_BACKENDURL}/interview`;
+const profileURL = `${meta.env.VITE_BACKENDURL}/profile`;
 
 export const BackendProvider = (props) => {
 	const [token, setToken] = useState(localStorage.getItem("token"));
 
+	// Axios instance with default headers
+	const axiosInstance = axios.create({
+		baseURL: backendURL,
+		headers: {
+			Authorization: `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+		timeout: 10000, // 10 seconds timeout
+	});
+
+	// Generic API request function
+	const apiRequest = async (
+		endpoint,
+		method,
+		body = null,
+		baseURL = backendURL
+	) => {
+		if (!token) return {error: "Unauthorized: No token provided"};
+
+		try {
+			const response = await axiosInstance({
+				url: `${baseURL}${endpoint}`,
+				method,
+				data: body,
+			});
+			return response.data;
+		} catch (error) {
+			console.error("API Error:", error.response?.data || error.message);
+
+			// Handle authentication errors
+			if (error.response?.status === 401) {
+				localStorage.removeItem("token");
+				setToken(null);
+				window.location.href = "/login"; // Redirect to login
+			}
+
+			return {
+				error: error.response?.data?.message || "Something went wrong",
+			};
+		}
+	};
+
+	// Fetch AI-generated questions
 	const getQuestions = async (level, jobDescription) => {
-		if (
-			typeof level == "undefined" ||
-			typeof jobDescription == "undefined"
-		) {
-			console.error("undefined params");
-			return null;
-		}
-		const response = await fetch(`${backendURL}/getquestions`, {
-			method: "POST",
-			headers: {
-				Authorization: `bearer ${token}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				level,
-				jobDescription,
-			}),
-		});
-		const json_response = await response.json();
-		let json_object = JSON.parse(json_response);
-		return json_object;
-	};
-	const getResumeResult = async (resume, jobDescription) => {
-		if (
-			typeof resume == "undefined" ||
-			typeof jobDescription == "undefined"
-		) {
-			console.error("undefined params");
-			return null;
-		}
-		const formData = new FormData();
-		formData.append("resume", resume);
-		formData.append("jobDescription", jobDescription);
-		try {
-			const response = await fetch(`${backendURL}/uploadresume`, {
-				method: "POST",
-				headers: {
-					Authorization: `bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: formData,
-			});
-			if (!response.ok) {
-				throw new Error("Failed to upload file");
-			}
-			const result = await response.json();
-			let json_object = JSON.parse(result);
-			return json_object;
-		} catch (error) {
-			console.error("Error:", error);
-			return {error: error.message};
-		}
+		if (!level || !jobDescription) return {error: "Invalid parameters"};
+		return await apiRequest("/questions", "POST", {level, jobDescription});
 	};
 
-	const getOverallResult = async (questions, answers) => {
-		if (typeof questions == "undefined" || typeof answers == "undefined") {
-			console.error("undefined params");
-			return null;
-		}
-		try {
-			let temp = Object.values(answers);
-
-			const response = await fetch(`${backendURL}/getoverallresult`, {
-				method: "POST",
-				headers: {
-					Authorization: `bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					questions,
-					answers: temp,
-				}),
-			});
-			if (!response.ok) {
-				throw new Error("Failed to get results");
-			}
-			const result = await response.json();
-			let json_object = JSON.parse(result);
-			return json_object;
-		} catch (error) {
-			console.error("Error:", error);
-			return {error: error.message};
-		}
-	};
-	const getAnswerFeedback = async (question, answer) => {
-		if (typeof question == "undefined" || typeof answer == "undefined") {
-			console.error("undefined params");
-			return null;
-		}
-		try {
-			const response = await fetch(`${backendURL}/getanswerfeedback`, {
-				method: "POST",
-				headers: {
-					Authorization: `bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					question,
-					answer,
-				}),
-			});
-			if (!response.ok) {
-				throw new Error("Failed to get results");
-			}
-			const result = await response.json();
-			let json_object = JSON.parse(result);
-
-			return json_object;
-		} catch (error) {
-			console.error("Error:", error);
-			return {error: error.message};
-		}
-	};
+	// Convert text to AI-generated audio
 	const getAudio = async (question) => {
+		if (!question) return {error: "Invalid parameters"};
+
 		try {
-			const response = await fetch(`${backendURL}/getaudio`, {
-				method: "POST",
-				headers: {
-					Authorization: `bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({text: question}),
-			});
+			const response = await axiosInstance.post(
+				"/audio",
+				{text: question},
+				{responseType: "blob"}
+			);
+			console.log(response);
 
-			if (!response.ok) throw new Error("Failed to fetch audio");
-
-			const blob = await response.blob();
-			const audioURL = URL.createObjectURL(blob);
-			const audio = new Audio(audioURL);
-			console.log(audio);
-			return audio;
+			const audioURL = URL.createObjectURL(response.data);
+			return new Audio(audioURL);
 		} catch (error) {
 			console.error("Error:", error);
+			return {error: "Failed to fetch audio"};
 		}
+	};
+
+	// Analyze resume based on job description
+	const getResumeResult = async (
+		uploadResult,
+		jobDescription,
+		interviewId
+	) => {
+		if (!uploadResult || !jobDescription)
+			return {error: "Invalid parameters"};
+		return await apiRequest("/resume-result", "POST", {
+			uploadResult,
+			jobDescription,
+			interviewId,
+		});
+	};
+
+	// Get previous resume analysis
+	const getOldResumeResult = async (id, jobDescription, interviewId) => {
+		if (!id) return {error: "Invalid parameters"};
+		return await apiRequest("/resume-result", "POST", {
+			id,
+			jobDescription,
+			interviewId,
+		});
+	};
+
+	// Get feedback for a specific answer
+	const getAnswerFeedback = async (
+		questionNumber,
+		question,
+		answer,
+		interviewId
+	) => {
+		if (!question || answer == null || typeof answer == "undefined")
+			return {error: "Invalid parameters"};
+		return await apiRequest("/answer-feedback", "POST", {
+			questionNumber,
+			question,
+			answer,
+			interviewId,
+		});
+	};
+
+	// Get overall interview results
+	const getOverallResult = async (questions, answers, interviewId) => {
+		if (!questions || !answers || !interviewId)
+			return {error: "Invalid parameters"};
+
+		return await apiRequest("/overall-result", "POST", {
+			questions,
+			answers: Object.values(answers),
+			interviewId,
+		});
+	};
+
+	// Upload resume and store in localStorage
+	const uploadResume = async (uploadResult) => {
+		if (!uploadResult) return {error: "Invalid parameters"};
+
+		const data = await apiRequest(
+			"/upload-resume",
+			"POST",
+			{uploadResult},
+			profileURL
+		);
+		if (data.error) return data;
+
+		const userInfo = localStorage.getItem("user-info");
+		if (userInfo) {
+			let jsonUser = JSON.parse(userInfo);
+			jsonUser.resumes = [...(jsonUser.resumes || []), data.resume];
+			localStorage.setItem("user-info", JSON.stringify(jsonUser));
+		}
+
+		return data.resume;
 	};
 
 	return (
@@ -148,9 +157,11 @@ export const BackendProvider = (props) => {
 			value={{
 				getQuestions,
 				getResumeResult,
+				getOldResumeResult,
 				getOverallResult,
 				getAudio,
 				getAnswerFeedback,
+				uploadResume,
 			}}>
 			{props.children}
 		</backendContext.Provider>
