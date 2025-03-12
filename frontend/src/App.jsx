@@ -17,11 +17,14 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import VideoScreening from "./pages/VideoScreening";
 
 const App = () => {
-	const {isAuthenticated} = useAuth();
+	const {isAuthenticated, loading} = useAuth();
 
 	return (
 		<>
-			<RefreshHandler isAuthenticated={isAuthenticated} />
+			<RefreshHandler
+				isAuthenticated={isAuthenticated}
+				loading={loading}
+			/>
 			<ToastContainer />
 			<Routes>
 				<Route path="/" element={<Layout />}>

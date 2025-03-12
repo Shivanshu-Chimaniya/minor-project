@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const {google} = require("googleapis");
+const {uploadImageToCloudinary} = require("../utils/cloudinary");
 
 const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_ID,
@@ -59,12 +60,13 @@ module.exports.LoginOrSignupWithGoogle = async (req, res, next) => {
 
 		// If user does not exist, create a new account
 		if (!user) {
+			let profileImage = await uploadImageToCloudinary(picture);
 			user = new User({
 				username: email,
 				name,
 				email,
 				isEmailVerified: verified_email,
-				profileImage: picture,
+				profileImage: profileImage || null,
 			});
 
 			try {
@@ -77,7 +79,8 @@ module.exports.LoginOrSignupWithGoogle = async (req, res, next) => {
 				});
 			}
 		}
-
+		let res2132 = await user.save();
+		console.log(res2132);
 		// Generate JWT token
 		const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_TIMEOUT,

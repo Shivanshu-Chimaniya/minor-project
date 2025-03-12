@@ -3,7 +3,9 @@ import axios from "axios";
 import {showToast} from "../utils/toast";
 
 const AuthContext = createContext();
-const backendURL = `${meta.env.VITE_BACKENDURL}/auth`;
+const backendURL = `${
+	import.meta.env.VITE_BACKENDURL || "http://localhost:8080"
+}/auth`;
 
 export const AuthProvider = ({children}) => {
 	const [loading, setLoading] = useState(true);

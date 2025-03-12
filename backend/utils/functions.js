@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 const {GoogleGenerativeAI} = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEN_AI_KEY);
 
 const getFileBuffer = async (fileUrl) => {
 	try {

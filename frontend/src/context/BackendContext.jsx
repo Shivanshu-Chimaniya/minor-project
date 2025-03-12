@@ -2,8 +2,12 @@ import React, {createContext, useContext, useState} from "react";
 import axios from "axios";
 
 const backendContext = createContext(null);
-const backendURL = `${meta.env.VITE_BACKENDURL}/interview`;
-const profileURL = `${meta.env.VITE_BACKENDURL}/profile`;
+const backendURL = `${
+	import.meta.env.VITE_BACKENDURL || "http://localhost:8080"
+}/interview`;
+const profileURL = `${
+	import.meta.env.VITE_BACKENDURL || "http://localhost:8080"
+}/profile`;
 
 export const BackendProvider = (props) => {
 	const [token, setToken] = useState(localStorage.getItem("token"));
@@ -66,7 +70,6 @@ export const BackendProvider = (props) => {
 				{text: question},
 				{responseType: "blob"}
 			);
-			console.log(response);
 
 			const audioURL = URL.createObjectURL(response.data);
 			return new Audio(audioURL);

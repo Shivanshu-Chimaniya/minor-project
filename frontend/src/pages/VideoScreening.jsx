@@ -57,7 +57,7 @@ const VideoScreening = () => {
 	}, []);
 
 	useEffect(() => {
-		if (questionAudio && questionAudio.length === 0) return;
+		if (questionAudio == null || questionAudio.length === 0) return;
 		// Wait for all audio files to be loaded before starting the interview
 		for (let audio of questionAudio) {
 			audio.addEventListener("ended", startListening);

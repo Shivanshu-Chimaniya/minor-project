@@ -1,11 +1,12 @@
 import React, {useEffect} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 
-function RefrshHandler({isAuthenticated}) {
+function RefrshHandler({isAuthenticated, loading}) {
 	const location = useLocation();
 	const navigate = useNavigate();
 
 	useEffect(() => {
+		if (loading) return;
 		if (isAuthenticated) {
 			if (
 				location.pathname === "/login" ||
@@ -23,7 +24,7 @@ function RefrshHandler({isAuthenticated}) {
 				navigate("/", {replace: false});
 			}
 		}
-	}, [location, navigate, isAuthenticated]);
+	}, [location, navigate, isAuthenticated, loading]);
 
 	return null;
 }

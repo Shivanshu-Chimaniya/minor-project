@@ -252,7 +252,7 @@ module.exports.getAudio = async (req, res) => {
 				.json({success: false, message: "Text is required."});
 
 		const client = new textToSpeech.TextToSpeechClient({
-			keyFilename: "./mygooglekey.json",
+			keyFilename: "./myGoogleKey.json",
 		});
 
 		const request = {
