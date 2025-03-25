@@ -55,7 +55,7 @@ const GoogleLogin = ({text}) => {
 
 const GoogleLoginButton = ({text}) => {
 	return (
-		<GoogleOAuthProvider clientId={meta.env.VITE_GOOGLE_CLIENT_ID}>
+		<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
 			<GoogleLogin text={text} />
 		</GoogleOAuthProvider>
 	);

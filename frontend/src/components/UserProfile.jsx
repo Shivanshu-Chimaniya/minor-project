@@ -1,12 +1,9 @@
-import React, {useState, useRef, useEffect} from "react";
+import React, {useState, useRef, useEffect, useContext} from "react";
 import UserIcon from "./UserIcon";
+import AuthContext from "../context/AuthContext";
 
-const UserProfile = ({
-	isAuthenticated,
-	user,
-	handleNavigation,
-	handleLogout,
-}) => {
+const UserProfile = ({handleNavigation, handleLogout}) => {
+	const {isAuthenticated, user} = useContext(AuthContext);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const menuRef = useRef(null);
 
@@ -26,7 +23,6 @@ const UserProfile = ({
 	const toggleMenu = () => {
 		setIsMenuOpen(!isMenuOpen);
 	};
-	console.log(user);
 	if (isAuthenticated) {
 		return (
 			<div className="relative" ref={menuRef}>
@@ -60,26 +56,29 @@ const UserProfile = ({
 						label="Your Profile"
 						path="/profile"
 						handleNavigation={handleNavigation}
+						setIsMenuOpen={setIsMenuOpen}
 					/>
-					<ProfileMenuItem
+					{/* <ProfileMenuItem
 						label="Interviews"
 						path="/interviews"
 						handleNavigation={handleNavigation}
+						setIsMenuOpen={setIsMenuOpen}
 					/>
 					<ProfileMenuItem
 						label="Upload Resume"
 						path="/upload-resume"
 						handleNavigation={handleNavigation}
-					/>
-					<a
+						setIsMenuOpen={setIsMenuOpen}
+					/> */}
+					<span
 						href="#"
 						onClick={(e) => {
 							e.preventDefault();
 							handleLogout();
 						}}
-						className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+						className="block cursor-pointer px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
 						Logout
-					</a>
+					</span>
 				</div>
 			</div>
 		);
@@ -101,17 +100,17 @@ const UserProfile = ({
 	);
 };
 
-const ProfileMenuItem = ({label, path, handleNavigation}) => {
+const ProfileMenuItem = ({label, path, handleNavigation, setIsMenuOpen}) => {
 	return (
-		<a
+		<span
 			href="#"
 			onClick={(e) => {
-				e.preventDefault();
 				handleNavigation(path);
+				setIsMenuOpen(false);
 			}}
-			className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+			className="block cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
 			{label}
-		</a>
+		</span>
 	);
 };
 

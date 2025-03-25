@@ -23,17 +23,32 @@ import UploadButton from "../components/UploadButton";
 import {useAuth} from "../context/AuthContext";
 import {useBackend} from "../context/BackendContext";
 import {useCloudinary} from "../context/CloudinaryProvider";
+import {useInterview} from "../context/InterviewContext";
 import UserIcon from "../components/UserIcon";
-
+import PdfThumbnail from "../components/PdfThumbnail";
+import {showToast} from "../utils/toast";
+import {useNavigate} from "react-router-dom";
+import VideoAnalysis from "../components/feedback/VideoAnalysis";
+import QuestionFeedbackItem from "../components/feedback/QuestionFeedbackItem";
+import JobDetailsSection from "../components/feedback/JobDetailsSection";
+import ResumeFeedback from "../components/feedback/ResumeFeedback";
+import OverallFeedback from "../components/feedback/OverallFeedback";
+import TechnicalFeedback from "../components/feedback/TechnicalFeedback";
 const UserProfileDashboard = () => {
 	const [userData, setUserData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [selectedFeedback, setSelectedFeedback] = useState(null);
 	const [activeTab, setActiveTab] = useState("questions");
+	// In your component file
+	const [isDeleting, setIsDeleting] = useState({});
 	const {uploadToCloudinary} = useCloudinary();
-	const {uploadResume} = useBackend();
+	const {uploadResume, deleteResume} = useBackend();
+	const {startInterview} = useInterview();
 	const auth = useAuth();
-
+	const {isAuthenticated} = useAuth();
+	const navigate = useNavigate();
+	console.log(userData);
 	useEffect(() => {
 		const fetchUserData = async () => {
 			try {
@@ -83,10 +98,32 @@ const UserProfileDashboard = () => {
 	} = userData;
 
 	let lastInterview = null;
+	let formatFeedbackItems = () => [];
 	if (interviews && interviews.length > 0) {
 		for (let i = interviews.length - 1; i >= 0; i--) {
 			if (interviews[i].isCompleted) {
 				lastInterview = interviews[i];
+				formatFeedbackItems = () => {
+					return lastInterview.questions.map((question, idx) => ({
+						questionNumber: idx + 1,
+						question,
+						answer:
+							lastInterview.answers[idx] ||
+							"Answer not available",
+						feedback:
+							(lastInterview.feedbacks &&
+								lastInterview.feedbacks[idx]?.feedback) ||
+							"Feedback not available",
+						perfectAnswer:
+							(lastInterview.feedbacks &&
+								lastInterview.feedbacks[idx]?.perfect_answer) ||
+							"Not available",
+						score:
+							(lastInterview.feedbacks &&
+								lastInterview.feedbacks[idx]?.score) ||
+							0,
+					}));
+				};
 				break;
 			}
 		}
@@ -103,6 +140,51 @@ const UserProfileDashboard = () => {
 			};
 		});
 	};
+	const handleDeleteResume = async (resume) => {
+		try {
+			setIsDeleting((prev) => ({...prev, [resume._id]: true}));
+
+			await deleteResume(resume._id, resume.public_id);
+
+			// Update the UI by removing the deleted resume from state
+			setUserData((prev) => {
+				return {
+					...prev,
+					resumes: prev.resumes.filter((r) => r._id !== resume._id),
+				};
+			});
+		} catch (error) {
+			showToast.error(error.message || "Failed to delete resume");
+			// No need to add resume back as we're using the original state
+		} finally {
+			setIsDeleting((prev) => ({...prev, [resume._id]: false}));
+		}
+	};
+
+	const reattemptInterview = async () => {
+		if (lastInterview == null) return;
+		if (!isAuthenticated) {
+			alert("Please log in to start an interview.");
+			return;
+		}
+		// setIsLoading(true);
+		navigate("/interview");
+		try {
+			let result = await startInterview(
+				lastInterview.jobDetails.level,
+				lastInterview.jobDetails.description,
+				lastInterview.jobDetails.tags,
+				lastInterview.jobDetails.features
+			);
+
+			if (result.length == 0) navigate("/selectinterview");
+		} catch (error) {
+			setError("Failed to start interview. Please try again.");
+			console.error("Interview selection error:", error);
+		} finally {
+			// setIsLoading(false);
+		}
+	};
 
 	// Tab system content renderer
 	const renderTabContent = () => {
@@ -112,272 +194,43 @@ const UserProfileDashboard = () => {
 			case "questions":
 				return (
 					<div className="space-y-4">
-						<h3 className="text-lg font-semibold mb-4 flex items-center">
-							<BsQuestionCircle className="text-purple-500 dark:text-purple-400 mr-2" />
-							Questions and Answers
-						</h3>
-						<div className="space-y-4">
-							{lastInterview.questions.map((question, idx) => (
-								<AnswerAccodian
-									key={idx}
-									question={question}
-									idx={idx}
-									lastInterview={lastInterview}
-								/>
-							))}
-						</div>
+						<TechnicalFeedback
+							dataReady={true}
+							feedbackItems={formatFeedbackItems()}
+							selectedFeedback={selectedFeedback}
+							setSelectedFeedback={setSelectedFeedback}
+						/>
 					</div>
 				);
 			case "resume":
 				return (
-					<div className="space-y-6">
-						<h3 className="text-lg font-semibold mb-4 flex items-center">
-							<FaFileAlt className="text-blue-500 dark:text-blue-400 mr-2" />
-							Resume Evaluation
-						</h3>
-
-						<div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-5 mb-5">
-							<div className="flex justify-between items-center mb-3">
-								<span className="text-blue-600 dark:text-blue-300 font-medium">
-									Resume Score
-								</span>
-								<span className="font-semibold text-lg">
-									{lastInterview.resumeResult
-										? lastInterview.resumeResult.score
-										: 0}
-									/10
-								</span>
-							</div>
-							<div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-								<div
-									className="bg-blue-600 dark:bg-blue-500 h-3 rounded-full"
-									style={{
-										width: `${
-											(lastInterview.resumeResult
-												? lastInterview.resumeResult
-														.score
-												: 0) * 10
-										}%`,
-									}}></div>
-							</div>
-						</div>
-
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-							<div className="bg-white dark:bg-gray-800/40 p-5 rounded-lg shadow-sm">
-								<h4 className="flex items-center text-sm font-medium mb-4">
-									<BsStars className="text-green-500 dark:text-green-400 mr-2" />
-									Strengths
-								</h4>
-								<ul className="space-y-3">
-									{lastInterview.resumeResult &&
-										lastInterview.resumeResult.strengths.map(
-											(strength, idx) => (
-												<li
-													key={idx}
-													className="flex items-start">
-													<span className="text-green-500 dark:text-green-400 mr-2">
-														✓
-													</span>
-													<span className="text-gray-700 dark:text-gray-300">
-														{strength}
-													</span>
-												</li>
-											)
-										)}
-								</ul>
-							</div>
-							<div className="bg-white dark:bg-gray-800/40 p-5 rounded-lg shadow-sm">
-								<h4 className="flex items-center text-sm font-medium mb-4">
-									<RiFileList3Line className="text-orange-500 dark:text-orange-400 mr-2" />
-									Areas for Improvement
-								</h4>
-								<ul className="space-y-3">
-									{lastInterview.resumeResult &&
-										lastInterview.resumeResult.weaknesses.map(
-											(weakness, idx) => (
-												<li
-													key={idx}
-													className="flex items-start">
-													<span className="text-orange-500 dark:text-orange-400 mr-2">
-														•
-													</span>
-													<span className="text-gray-700 dark:text-gray-300">
-														{weakness}
-													</span>
-												</li>
-											)
-										)}
-								</ul>
-							</div>
-						</div>
-
-						<div className="bg-white dark:bg-gray-800/40 p-5 rounded-lg shadow-sm">
-							<h4 className="flex items-center text-sm font-medium mb-4">
-								<BsLightbulb className="text-yellow-500 dark:text-yellow-400 mr-2" />
-								Suggestions
-							</h4>
-							<ul className="space-y-3">
-								{lastInterview.resumeResult &&
-									lastInterview.resumeResult.suggestions.map(
-										(suggestion, idx) => (
-											<li
-												key={idx}
-												className="flex items-start bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-												<span className="text-yellow-600 dark:text-yellow-400 mr-2">
-													💡
-												</span>
-												<span className="text-gray-700 dark:text-gray-300">
-													{suggestion}
-												</span>
-											</li>
-										)
-									)}
-							</ul>
-						</div>
-					</div>
+					<ResumeFeedback
+						resumeResult={lastInterview.resumeResult}
+						dataReady={true}
+					/>
 				);
 			case "overall":
 				return (
-					<div className="space-y-6">
-						<h3 className="text-lg font-semibold mb-4 flex items-center">
-							<FaChartBar className="text-indigo-500 dark:text-indigo-400 mr-2" />
-							Overall Evaluation
-						</h3>
-
-						<div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-5 mb-6">
-							<div className="flex justify-between items-center mb-4">
-								<span className="text-indigo-600 dark:text-indigo-300 font-medium">
-									Overall Score
-								</span>
-								<span className="font-semibold text-xl">
-									{
-										lastInterview.overallResult.evaluation
-											.overall_score
-									}
-									/10
-								</span>
-							</div>
-							<div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-5">
-								<div
-									className={`h-3 rounded-full ${
-										lastInterview.overallResult.evaluation
-											.overall_score > 7
-											? "bg-green-500 dark:bg-green-400"
-											: lastInterview.overallResult
-													.evaluation.overall_score >
-											  4
-											? "bg-yellow-500 dark:bg-yellow-400"
-											: "bg-red-500 dark:bg-red-400"
-									}`}
-									style={{
-										width: `${
-											lastInterview.overallResult
-												.evaluation.overall_score * 10
-										}%`,
-									}}></div>
-							</div>
-
-							<div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
-								<p className="text-gray-700 dark:text-gray-300 font-medium">
-									{
-										lastInterview.overallResult.evaluation
-											.final_verdict
-									}
-								</p>
-							</div>
-						</div>
-
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-							<div className="bg-white dark:bg-gray-800/40 p-5 rounded-lg shadow-sm">
-								<h4 className="flex items-center text-sm font-medium mb-4">
-									<BsStars className="text-green-500 dark:text-green-400 mr-2" />
-									Strengths
-								</h4>
-								<ul className="space-y-3">
-									{lastInterview.overallResult.evaluation.strengths.map(
-										(strength, idx) => (
-											<li
-												key={idx}
-												className="flex items-start">
-												<span className="text-green-500 dark:text-green-400 mr-2">
-													✓
-												</span>
-												<span className="text-gray-700 dark:text-gray-300">
-													{strength}
-												</span>
-											</li>
-										)
-									)}
-								</ul>
-							</div>
-							<div className="bg-white dark:bg-gray-800/40 p-5 rounded-lg shadow-sm">
-								<h4 className="flex items-center text-sm font-medium mb-4">
-									<RiFileList3Line className="text-orange-500 dark:text-orange-400 mr-2" />
-									Areas for Improvement
-								</h4>
-								<ul className="space-y-3">
-									{lastInterview.overallResult.evaluation.weaknesses.map(
-										(weakness, idx) => (
-											<li
-												key={idx}
-												className="flex items-start">
-												<span className="text-orange-500 dark:text-orange-400 mr-2">
-													•
-												</span>
-												<span className="text-gray-700 dark:text-gray-300">
-													{weakness}
-												</span>
-											</li>
-										)
-									)}
-								</ul>
-							</div>
-						</div>
-					</div>
+					<OverallFeedback
+						overallResult={lastInterview.overallResult}
+						dataReady={true}
+					/>
 				);
 			case "jobDetails":
 				return (
 					<div className="space-y-6">
-						<h3 className="text-lg font-semibold mb-4 flex items-center">
-							<FaBriefcase className="text-blue-500 dark:text-blue-400 mr-2" />
-							Job Details
-						</h3>
-
-						<div className="bg-white dark:bg-gray-800/40 rounded-lg p-6 shadow-sm">
-							<div className="flex items-center mb-4">
-								<div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
-									<FaBriefcase className="text-blue-500 dark:text-blue-400" />
-								</div>
-								<div className="ml-4">
-									<h4 className="font-medium text-lg text-gray-800 dark:text-white">
-										{lastInterview.jobDetails.level
-											.charAt(0)
-											.toUpperCase() +
-											lastInterview.jobDetails.level.slice(
-												1
-											)}{" "}
-										Position
-									</h4>
-									<p className="text-gray-500 dark:text-gray-400">
-										Interview conducted on{" "}
-										{new Date(
-											lastInterview.createdAt
-										).toLocaleDateString()}
-									</p>
-								</div>
-							</div>
-
-							<div className="mt-5">
-								<h5 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
-									Job Description
-								</h5>
-								<div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-									<p className="text-gray-700 dark:text-gray-300">
-										{lastInterview.jobDetails.description}
-									</p>
-								</div>
-							</div>
-						</div>
+						<JobDetailsSection
+							jobDetails={lastInterview.jobDetails}
+						/>
+					</div>
+				);
+			case "video":
+				return (
+					// Video Evaluation
+					<div className="space-y-6">
+						<VideoAnalysis
+							videoAnalysisResult={lastInterview.videoResult}
+						/>
 					</div>
 				);
 			default:
@@ -494,16 +347,43 @@ const UserProfileDashboard = () => {
 				{lastInterview && (
 					<div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8">
 						{/* Header */}
-						<div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-semibold flex items-center text-gray-800 dark:text-white">
-								<BsShieldCheck className="mr-3 text-blue-500 dark:text-blue-400" />
-								Latest Interview Results
-							</h2>
-							<div className="text-gray-500 dark:text-gray-400 mt-1">
-								{new Date(
-									lastInterview.createdAt
-								).toLocaleDateString()}
+						<div className="px-8 py-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+							<div>
+								<h2 className="text-xl font-semibold flex items-center text-gray-800 dark:text-white">
+									<BsShieldCheck className="mr-3 text-blue-500 dark:text-blue-400" />
+									Latest Interview Results
+								</h2>
+								<div className="text-gray-500 dark:text-gray-400 mt-1">
+									{new Date(
+										lastInterview.createdAt
+									).toLocaleDateString()}
+								</div>
 							</div>
+
+							<button
+								onClick={() =>
+									reattemptInterview(
+										lastInterview.interviewTypeIndex || 0
+									)
+								}
+								className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors flex items-center">
+								<>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										className="h-4 w-4 mr-2"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor">
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+										/>
+									</svg>
+									Reattempt
+								</>
+							</button>
 						</div>
 
 						{/* Tab Navigation */}
@@ -545,6 +425,15 @@ const UserProfileDashboard = () => {
 									}`}>
 									Overall Evaluation
 								</button>
+								<button
+									onClick={() => setActiveTab("video")}
+									className={`px-5 py-4 font-medium text-sm border-b-2 ${
+										activeTab === "video"
+											? "border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400"
+											: "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+									}`}>
+									Video
+								</button>
 							</nav>
 						</div>
 
@@ -568,24 +457,81 @@ const UserProfileDashboard = () => {
 								{resumes.map((resume) => (
 									<div
 										key={resume._id}
-										onClick={() =>
-											window.open(
-												`${resume.url}`,
-												"_blank"
-											)
-										}
-										className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer shadow-sm">
-										<div className="flex items-center mb-3">
-											<div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-												<FaProjectDiagram className="text-blue-500 dark:text-blue-400" />
+										className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm">
+										<div
+											className="flex items-center mb-3"
+											onClick={() =>
+												window.open(
+													`${resume.url}`,
+													"_blank"
+												)
+											}>
+											<div className="bg-blue-100 dark:bg-blue-900/50 rounded-lg cursor-pointer">
+												<PdfThumbnail
+													url={resume.url}
+												/>
 											</div>
 											<span className="font-medium ml-3 line-clamp-1 overflow-ellipsis text-gray-800 dark:text-white">
 												{resume.filename ||
 													"untitled_fe"}
 											</span>
 										</div>
-										<div className="text-sm text-gray-500 dark:text-gray-400">
-											Last updated: Recently
+										<div className="flex justify-between items-center">
+											<div className="text-sm text-gray-500 dark:text-gray-400">
+												Last updated: Recently
+											</div>
+											{isDeleting[resume._id] ? (
+												<button
+													className="flex items-center justify-center px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-medium cursor-not-allowed"
+													disabled>
+													<svg
+														className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500"
+														xmlns="http://www.w3.org/2000/svg"
+														fill="none"
+														viewBox="0 0 24 24">
+														<circle
+															className="opacity-25"
+															cx="12"
+															cy="12"
+															r="10"
+															stroke="currentColor"
+															strokeWidth="4"></circle>
+														<path
+															className="opacity-75"
+															fill="currentColor"
+															d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+													</svg>
+													Deleting...
+												</button>
+											) : (
+												<button
+													onClick={(e) => {
+														e.stopPropagation();
+														if (
+															window.confirm(
+																"Are you sure you want to delete this resume? This action is irreversible."
+															)
+														) {
+															handleDeleteResume(
+																resume
+															);
+														}
+													}}
+													className="flex items-center px-3 py-1 rounded-md bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-medium transition-colors">
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														className="h-4 w-4 mr-1"
+														viewBox="0 0 20 20"
+														fill="currentColor">
+														<path
+															fillRule="evenodd"
+															d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+															clipRule="evenodd"
+														/>
+													</svg>
+													Delete
+												</button>
+											)}
 										</div>
 									</div>
 								))}

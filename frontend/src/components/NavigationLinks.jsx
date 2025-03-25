@@ -2,7 +2,7 @@ import React from "react";
 
 const NavigationLinks = ({handleNavigation, activeLink}) => {
 	const links = [
-		{path: "/pricing", label: "Pricing"},
+		{path: "/selectinterview", label: "Interviews"},
 		{path: "/about", label: "About"},
 	];
 
@@ -16,7 +16,7 @@ const NavigationLinks = ({handleNavigation, activeLink}) => {
 						e.preventDefault();
 						handleNavigation(link.path);
 					}}
-					className={`
+					className={` cursor-pointer
             px-4 py-2 rounded-md font-medium
             transition-colors duration-300
             

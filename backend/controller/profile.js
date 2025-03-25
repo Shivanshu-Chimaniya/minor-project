@@ -1,6 +1,14 @@
 const Resume = require("../models/Resume");
 const User = require("../models/User");
 const {extractText} = require("../utils/extractText");
+const cloudinary = require("cloudinary").v2; // Assuming you're using cloudinary
+
+// Configure cloudinary if you haven't already
+cloudinary.config({
+	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+	api_key: process.env.CLOUDINARY_API_KEY,
+	api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 /**
  * @route POST /resume/upload
@@ -61,5 +69,49 @@ module.exports.uploadResume = async (req, res) => {
 		return res
 			.status(500)
 			.json({success: false, message: "Internal server error."});
+	}
+};
+
+/**
+ * @route Delete /resume/upload
+ * @desc Deletes selected resume, and remover it from the user
+ * @access Private (Requires authentication)
+ */
+
+module.exports.deleteResume = async (req, res) => {
+	try {
+		const {resumeId, publicId} = req.body;
+
+		if (!resumeId || !publicId) {
+			return res
+				.status(400)
+				.json({message: "Resume ID and public ID are required"});
+		}
+		let user = await User.findById(req.user.id);
+		if (!user.resumes.includes(resumeId)) {
+			return res
+				.status(401)
+				.json({message: "Resume ID doesn't belong to user."});
+		}
+
+		// Delete file from storage (e.g., Cloudinary)
+		await cloudinary.uploader.destroy(publicId);
+
+		// Delete record from database
+		user.resumes.splice(user.resumes.indexOf(resumeId), 1);
+		await user.save();
+		const result = await Resume.findByIdAndDelete(resumeId);
+
+		if (!result) {
+			return res.status(404).json({message: "Resume not found"});
+		}
+
+		res.status(200).json({message: "Resume deleted successfully"});
+	} catch (error) {
+		console.error("Error deleting resume:", error);
+		res.status(500).json({
+			message: "Failed to delete resume",
+			error: error.message,
+		});
 	}
 };

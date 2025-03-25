@@ -4,15 +4,18 @@ import GameOfLife from "../components/GameOfLife";
 import AnimatedGlassButton from "../components/GlowButton";
 import {useEffect, useState} from "react";
 import {useAuth} from "../context/AuthContext";
+import Badge from "../components/Badge";
+import {useInterview} from "../context/InterviewContext";
 
 const LandingPage = () => {
 	const {isAuthenticated} = useAuth();
 	const navigate = useNavigate();
+	const {uploadVideo} = useInterview();
 	const [isLoading, setIsLoading] = useState(true);
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setIsLoading(false);
-		}, 200);
+		}, 800);
 
 		return () => clearTimeout(timer);
 	}, []);
@@ -28,12 +31,8 @@ const LandingPage = () => {
 
 				{/* Foreground Content with Blur */}
 				<div
-					className={`relative h-full backdrop-brightness-90 dark:bg-neutral-900/10 
-      ${isLoading ? "" : "backdrop-blur-sm dark:backdrop-blur-sm"} 
-				backdrop-blur-3xl
-      transition-all duration-800 ease-out flex flex-col justify-center items-center 
-      text-zinc-800 dark:text-white text-center p-8`}>
-					<h1 className="text-5xl mb-6 font-bold">
+					className={`relative flex flex-col h-full justify-center items-center text-zinc-800 dark:bg-neutral-900/10 dark:text-white text-center p-8`}>
+					<h1 className="text-5xl p-2 mb-6 font-bold">
 						Your Career Algorithm is Buggy. Let's Fix That.
 					</h1>
 
@@ -190,7 +189,8 @@ const LandingPage = () => {
 							</div>
 						</div>
 
-						<div className="p-6 flex items-start bg-[#F8FAFC] dark:bg-[#0F172A] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+						<div className="relative p-6 flex items-start bg-[#F8FAFC] dark:bg-[#0F172A] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+							<Badge text="Experimental" />
 							<div className="text-3xl mr-4 text-[#2563EB] dark:text-[#3B82F6]">
 								📹
 							</div>
@@ -288,7 +288,7 @@ const LandingPage = () => {
 			</div>
 
 			{/* Testimonials Section */}
-			<div className="py-16 px-8 bg-[#FFFFFF] dark:bg-[#1E293B]">
+			{/* <div className="py-16 px-8 bg-[#FFFFFF] dark:bg-[#1E293B]">
 				<div className="max-w-7xl mx-auto">
 					<h2 className="text-center text-3xl font-bold mb-12 text-[#1E293B] dark:text-[#E2E8F0]">
 						Success Stories
@@ -362,61 +362,57 @@ const LandingPage = () => {
 						</div>
 					</div>
 				</div>
-			</div>
+			</div> */}
 
 			{/* FAQ Section */}
-			<div className="py-16 px-8 bg-[#F8FAFC] dark:bg-[#0F172A]">
+			<div className="py-16 px-8   bg-[#FFFFFF] dark:bg-[#1E293B]">
+				{/* <div className="py-16 px-8  bg-[#F8FAFC] dark:bg-[#0F172A]"> */}
 				<div className="max-w-4xl mx-auto">
 					<h2 className="text-center text-3xl font-bold mb-12 text-[#1E293B] dark:text-[#E2E8F0]">
 						Frequently Asked Questions
 					</h2>
 
 					<div className="space-y-6">
-						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#2c3647]">
 							<h3 className="text-xl font-semibold mb-3 text-[#2563EB] dark:text-[#3B82F6]">
 								Is the AI interview experience free?
 							</h3>
 							<p className="text-[#1E293B] dark:text-[#E2E8F0]">
-								We offer a free basic tier that includes one
-								practice interview and limited feedback. Premium
-								plans unlock unlimited interviews, in-depth
-								analysis, and personalized coaching.
+								Yes, as of now it is free.
 							</p>
 						</div>
 
-						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#2c3647]">
 							<h3 className="text-xl font-semibold mb-3 text-[#2563EB] dark:text-[#3B82F6]">
 								How accurate is the AI feedback?
 							</h3>
 							<p className="text-[#1E293B] dark:text-[#E2E8F0]">
-								Our AI has been trained on thousands of real
-								interviews and industry best practices. While no
-								AI is perfect, our users report 92% satisfaction
-								with the feedback accuracy and helpfulness.
+								While no AI is perfect, We hope to deliver
+								accurate results, you can help us acheive that
+								with a simple feedbacks.
 							</p>
 						</div>
 
-						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#2c3647]">
 							<h3 className="text-xl font-semibold mb-3 text-[#2563EB] dark:text-[#3B82F6]">
 								Can I practice multiple interviews?
 							</h3>
 							<p className="text-[#1E293B] dark:text-[#E2E8F0]">
 								Yes! We offer interviews across different
-								industries, roles, and difficulty levels. With
-								our premium plans, you can practice as many
-								interviews as you need to feel confident.
+								industries, roles, and difficulty levels. You
+								can practice as many interviews as you need to
+								feel confident.
 							</p>
 						</div>
 
-						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#1E293B]">
+						<div className="p-6 bg-[#FFFFFF] dark:bg-[#1E293B] rounded-lg border border-[#E2E8F0] dark:border-[#2c3647]">
 							<h3 className="text-xl font-semibold mb-3 text-[#2563EB] dark:text-[#3B82F6]">
 								How long does each practice interview take?
 							</h3>
 							<p className="text-[#1E293B] dark:text-[#E2E8F0]">
-								Most interview sessions last between 20-30
-								minutes, followed by an immediate feedback
-								report. You can also choose quick 10-minute
-								focused sessions for specific skills.
+								For now, interviews are quick (5-10) mins, but
+								we are going to introduce more options for
+								longer sessions.
 							</p>
 						</div>
 					</div>
@@ -440,11 +436,6 @@ const LandingPage = () => {
 								onClick={() => navigate("/register")}>
 								Create Free Account
 							</button>
-							{/* <button
-							className="px-8 py-4 bg-transparent text-white border-2 border-white hover:bg-white/10 font-bold rounded-md transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-							onClick={() => navigate("/selectinterview")}>
-							Try Demo Interview
-						</button> */}
 						</div>
 					</div>
 				</div>

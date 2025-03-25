@@ -2,7 +2,7 @@ import React from "react";
 import SkeletonLoader from "../SkeletonLoader";
 
 const ResumeFeedback = ({dataReady, resumeResult}) => (
-	<div className="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200">
+	<div className=" text-gray-800 dark:text-gray-100 transition-colors duration-200">
 		<div className="p-6 border-b border-gray-200 dark:border-gray-800">
 			{dataReady ? (
 				<div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow dark:shadow-gray-950">

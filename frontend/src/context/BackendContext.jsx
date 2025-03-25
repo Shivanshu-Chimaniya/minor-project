@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useState} from "react";
+import React, {createContext, useContext, useEffect, useState} from "react";
 import axios from "axios";
 
 const backendContext = createContext(null);
@@ -10,8 +10,12 @@ const profileURL = `${
 }/profile`;
 
 export const BackendProvider = (props) => {
-	const [token, setToken] = useState(localStorage.getItem("token"));
+	const auth = props.useAuth();
+	const [token, setToken] = useState(auth.getToken());
 
+	useEffect(() => {
+		setToken(auth.getToken());
+	}, [props.useAuth]);
 	// Axios instance with default headers
 	const axiosInstance = axios.create({
 		baseURL: backendURL,
@@ -55,9 +59,20 @@ export const BackendProvider = (props) => {
 	};
 
 	// Fetch AI-generated questions
-	const getQuestions = async (level, jobDescription) => {
+	const getQuestions = async (
+		level,
+		jobDescription,
+		tags = null,
+		features = null
+	) => {
 		if (!level || !jobDescription) return {error: "Invalid parameters"};
-		return await apiRequest("/questions", "POST", {level, jobDescription});
+
+		return await apiRequest("/questions", "POST", {
+			level,
+			jobDescription,
+			tags,
+			features,
+		});
 	};
 
 	// Convert text to AI-generated audio
@@ -132,6 +147,32 @@ export const BackendProvider = (props) => {
 			interviewId,
 		});
 	};
+	// Get overall interview results
+	const getVideoResult = async (uploadResult, interviewId) => {
+		if (!uploadResult || !interviewId) return {error: "Invalid parameters"};
+
+		try {
+			const response = await axios.post(
+				`${backendURL}/video-result`,
+				{
+					uploadResult,
+					interviewId,
+				},
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+			return response.data;
+		} catch (error) {
+			console.error("Error:", error.response?.data || error.message);
+			return {
+				error: error.response?.data?.message || "Something went wrong",
+			};
+		}
+	};
 
 	// Upload resume and store in localStorage
 	const uploadResume = async (uploadResult) => {
@@ -155,6 +196,32 @@ export const BackendProvider = (props) => {
 		return data.resume;
 	};
 
+	const deleteResume = async (resumeId, publicId) => {
+		try {
+			const response = await fetch(`${profileURL}/delete-resume`, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${localStorage.getItem("token")}`, // If you're using token auth
+				},
+				body: JSON.stringify({
+					resumeId,
+					publicId,
+				}),
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || "Failed to delete resume");
+			}
+
+			return await response.json();
+		} catch (error) {
+			console.error("Error deleting resume:", error);
+			throw error;
+		}
+	};
+
 	return (
 		<backendContext.Provider
 			value={{
@@ -165,6 +232,8 @@ export const BackendProvider = (props) => {
 				getAudio,
 				getAnswerFeedback,
 				uploadResume,
+				deleteResume,
+				getVideoResult,
 			}}>
 			{props.children}
 		</backendContext.Provider>

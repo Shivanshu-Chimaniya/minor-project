@@ -1,18 +1,14 @@
-import {Outlet} from "react-router-dom";
-import {useState, useContext, useEffect} from "react";
-import {useNavigate} from "react-router-dom";
-import AuthContext from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import MobileMenu from "../components/MobileMenu";
+import {useContext, useState} from "react";
+import {Outlet, useNavigate} from "react-router-dom";
 import Footer from "../components/Footer";
+import MobileMenu from "../components/MobileMenu";
+import Navbar from "../components/Navbar";
+import AuthContext from "../context/AuthContext";
 
 const Layout = () => {
-	const [darkMode, setDarkMode] = useState(false);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const navigate = useNavigate();
-	const {isAuthenticated, logout, user} = useContext(AuthContext);
-
-	// Initialize dark mode based on user preference
+	const {isAuthenticated, logout} = useContext(AuthContext);
 
 	// Toggle dark mode
 
@@ -36,8 +32,6 @@ const Layout = () => {
 			<Navbar
 				handleNavigation={handleNavigation}
 				handleLogout={handleLogout}
-				isAuthenticated={isAuthenticated}
-				user={user}
 				toggleMobileMenu={toggleMobileMenu}
 			/>
 

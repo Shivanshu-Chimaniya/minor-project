@@ -8,16 +8,24 @@ const {
 	makeAnwserFeedbackPrompt,
 	makeQuestionPrompt,
 	makeResumePrompt,
+	makeVideoPrompt,
 } = require("../utils/prompts");
 const {extractText} = require("../utils/extractText");
-
+const {GoogleGenerativeAI} = require("@google/generative-ai");
+const {GoogleAIFileManager} = require("@google/generative-ai/server");
+const {extractJsonString} = require("../utils/functions");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEN_AI_KEY);
+const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
+const fs = require("fs").promises;
+const path = require("path");
+const fetch = require("node-fetch");
 /**
  * @route POST /interview/questions
  * @desc Generates interview questions based on job description and level
  * @access Private (User authentication required)
  */
 module.exports.getQuestions = async (req, res) => {
-	const {level, jobDescription} = req.body;
+	const {level, jobDescription, tags, features} = req.body;
 
 	if (!level || !jobDescription) {
 		return res.status(400).json({
@@ -33,7 +41,12 @@ module.exports.getQuestions = async (req, res) => {
 				.status(404)
 				.json({success: false, message: "User not found."});
 
-		const prompt = makeQuestionPrompt({level, jobDescription});
+		const prompt = makeQuestionPrompt({
+			level,
+			jobDescription,
+			tags,
+			features,
+		});
 		const questions = await getArrayFromGemini(prompt);
 
 		const interview = new Interview({
@@ -229,12 +242,124 @@ module.exports.getOverallResult = async (req, res) => {
 		interview.isCompleted = true;
 		await interview.save();
 
+		// const user = await User.findById(req.user.id);
+
+		// let totalInterviews = user.interviewStats.totalInterviews+1;
+		// let performanceScore = user.interviewStats.performanceScore * user.interviewStats.totalInterviews + interview.overallResult.;
+		// let totalInterviews = user.interviewStats.totalInterviews+1;
+		// let totalInterviews = user.interviewStats.totalInterviews+1;
+
+		// interviewStats = {totalInterviews: user.interviewStats.totalInterviews+1 ,performanceScore: user.interviewStats.performanceScore * user.interviewStats.totalInterviews
+
+		// 		// // Interview Statistics
+		// 		// interviewStats: {
+		// 		// 	totalInterviews: {
+		// 		// 		type: Number,
+		// 		// 		default: 0,
+		// 		// 	},
+		// 		// 	performanceScore: {
+		// 		// 		type: Number,
+		// 		// 		default: 0,
+		// 		// 		min: 0,
+		// 		// 		max: 100,
+		// 		// 	},
+		// 		// 	strengths: [
+		// 		// 		{
+		// 		// 			type: String,
+		// 		// 		},
+		// 		// 	],
+		// 		// 	weaknesses: [
+		// 		// 		{
+		// 		// 			type: String,
+		// 		// 		},
+		// 		// 	],
+		// 		// },
+
 		return res.status(200).json({success: true, overallResult});
 	} catch (error) {
 		console.error("Overall result error:", error);
 		return res
 			.status(500)
 			.json({success: false, message: "Internal server error"});
+	}
+};
+
+/**
+ * @route POST /resume/result
+ * @desc Processes resume, extracts text, and generates an AI evaluation
+ * @access Private
+ */
+
+module.exports.getVideoResult = async (req, res) => {
+	const {uploadResult, interviewId} = req.body;
+
+	if (!uploadResult || !uploadResult.mp4_url) {
+		return res.status(400).json({
+			success: false,
+			message: "Invalid input: mp4_url is required in uploadResult.",
+		});
+	}
+
+	let tempVideoPath = null;
+	try {
+		// Fetch video from URL
+		const videoResponse = await fetch(uploadResult.mp4_url);
+		if (!videoResponse.ok) {
+			throw new Error(
+				`Failed to fetch video: ${videoResponse.statusText}`
+			);
+		}
+
+		// Read video data as a Buffer
+		const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+
+		// Find interview
+		const interview = await Interview.findById(interviewId);
+		if (!interview) {
+			return res.status(404).json({
+				success: false,
+				message: "Interview not found.",
+			});
+		}
+
+		// Prepare Gemini analysis
+		const model = genAI.getGenerativeModel({
+			model: "gemini-1.5-pro",
+		});
+
+		const prompt = makeVideoPrompt();
+
+		// Perform video analysis with correct Gemini API format
+		const videoResult = await model.generateContent([
+			{
+				inlineData: {
+					mimeType: "video/mp4",
+					data: videoBuffer.toString("base64"),
+				},
+			},
+			{text: prompt},
+		]);
+
+		// Save analysis result
+		let responseText = videoResult.response.text();
+		let jsonString = extractJsonString(responseText);
+		interview.videoResult = jsonString
+			? JSON.parse(jsonString)
+			: responseText;
+		interview.video = uploadResult;
+		await interview.save();
+
+		return res.status(201).json({
+			success: true,
+			videoResult: interview.videoResult,
+		});
+	} catch (error) {
+		console.error("Video processing error:", error);
+		return res.status(500).json({
+			success: false,
+			message: "Internal server error",
+			error: error.message,
+		});
 	}
 };
 

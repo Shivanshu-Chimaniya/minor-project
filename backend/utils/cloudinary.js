@@ -1,5 +1,5 @@
 const uploadImageToCloudinary = async (googleImageUrl) => {
-	const cloudName = process.env.VITE_CLOUD_NAME; // Replace with your Cloudinary cloud name
+	const cloudName = process.env.CLOUDINARY_CLOUD_NAME; // Replace with your Cloudinary cloud name
 	const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
 	try {

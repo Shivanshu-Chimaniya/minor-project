@@ -13,9 +13,11 @@ export const CloudinaryProvider = ({children}) => {
 	/**
 	 * Uploads a file to Cloudinary
 	 * @param {File} file - The file to upload
+	 * @param {string} uploadPreset - Cloudinary upload preset
+	 * @param {string} resourceType - Resource type ('image', 'video', etc.)
 	 * @returns {Object | null} - Uploaded file details or null on failure
 	 */
-	const uploadToCloudinary = async (file) => {
+	const uploadToCloudinary = async (file, uploadPreset, resourceType) => {
 		// Validate file input
 		if (!file) {
 			toast.error("No file selected for upload.");
@@ -24,10 +26,7 @@ export const CloudinaryProvider = ({children}) => {
 
 		const formData = new FormData();
 		formData.append("file", file);
-		formData.append(
-			"upload_preset",
-			import.meta.env.VITE_CLOUD_UPLOAD_PRESET || "Resume"
-		); // Ensure an upload preset is provided
+		formData.append("upload_preset", uploadPreset);
 
 		try {
 			const cloudName = import.meta.env.VITE_CLOUD_NAME;
@@ -37,19 +36,22 @@ export const CloudinaryProvider = ({children}) => {
 				);
 			}
 
-			// Cloudinary API endpoint for raw file uploads
 			const response = await fetch(
-				`https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+				`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
 				{
 					method: "POST",
 					body: formData,
 				}
 			);
 
-			// Handle errors from Cloudinary API response
 			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
 				throw new Error(
-					`Cloudinary upload failed with status: ${response.status}`
+					`Cloudinary upload failed: ${
+						errorData.error?.message ||
+						response.statusText ||
+						response.status
+					}`
 				);
 			}
 
@@ -60,14 +62,15 @@ export const CloudinaryProvider = ({children}) => {
 					"Invalid response from Cloudinary. Missing secure URL."
 				);
 			}
-
-			toast.success("File uploaded successfully!");
-
-			// Return relevant file details
 			return {
 				url: data.secure_url,
 				id: data.public_id,
 				filename: data.original_filename,
+				format: data.format,
+				resourceType: data.resource_type,
+				size: data.bytes,
+				createdAt: data.created_at,
+				folder: data.folder || "",
 			};
 		} catch (error) {
 			console.error("Error uploading to Cloudinary:", error);
@@ -76,8 +79,35 @@ export const CloudinaryProvider = ({children}) => {
 		}
 	};
 
+	/**
+	 * Uploads a resume to Cloudinary
+	 * @param {File} file - The resume file to upload
+	 * @returns {Object | null} - Uploaded file details or null on failure
+	 */
+	const uploadResumeToCloudinary = async (file) => {
+		return await uploadToCloudinary(file, "Resume", "raw");
+	};
+
+	/**
+	 * Uploads a video (MP4 only) to Cloudinary
+	 * @param {File} file - The video file to upload
+	 * @returns {Object | null} - Uploaded file details or null on failure
+	 */
+	const uploadVideoToCloudinary = async (file) => {
+		if (!file.name.endsWith(".mp4")) {
+			toast.error("Only MP4 videos are allowed for upload.");
+			return null;
+		}
+		let uploadResult = await uploadToCloudinary(file, "CamVideo", "video");
+		if (!uploadResult) return null;
+		let mp4_url = uploadResult.url.replace("/upload/", "/upload/f_mp4/");
+
+		return {...uploadResult, mp4_url};
+	};
+
 	return (
-		<CloudinaryContext.Provider value={{uploadToCloudinary}}>
+		<CloudinaryContext.Provider
+			value={{uploadResumeToCloudinary, uploadVideoToCloudinary}}>
 			{children}
 		</CloudinaryContext.Provider>
 	);
@@ -85,8 +115,14 @@ export const CloudinaryProvider = ({children}) => {
 
 /**
  * Custom hook to use Cloudinary upload functionality
- * @returns {Object} Cloudinary upload function
+ * @returns {Object} Cloudinary upload functions
  */
 export const useCloudinary = () => {
-	return useContext(CloudinaryContext);
+	const context = useContext(CloudinaryContext);
+	if (!context) {
+		throw new Error(
+			"useCloudinary must be used within a CloudinaryProvider"
+		);
+	}
+	return context;
 };

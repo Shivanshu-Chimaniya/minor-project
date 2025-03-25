@@ -9,16 +9,22 @@ export const InterviewProvider = (props) => {
 	const [interviewState, setInterviewState] = useState({
 		questions: null,
 		questionAudio: null,
-		jobDetails: {level: null, description: null},
+		jobDetails: {
+			level: null,
+			description: null,
+			tags: null,
+			features: null,
+		},
 		resumeResult: null,
 		answers: null,
 		overallResult: null,
+		videoAnalysisResult: null,
 		feedbacks: null,
 		id: null,
 	});
 
 	const handleResponse = (response, errorMessage) => {
-		if (response.error) {
+		if (!response.success) {
 			showToast.error(response.message || errorMessage);
 			return false;
 		}
@@ -26,13 +32,18 @@ export const InterviewProvider = (props) => {
 	};
 
 	const interviewActions = {
-		startInterview: async (level, jobDescription) => {
-			const updatedJobDetails = {level, description: jobDescription};
+		startInterview: async (level, jobDescription, tags, features) => {
+			const updatedJobDetails = {
+				level,
+				description: jobDescription,
+				tags,
+				features,
+			};
 			setInterviewState((prevState) => ({
 				...prevState,
 				jobDetails: updatedJobDetails,
 			}));
-			return await getQuestions(level, jobDescription);
+			return await getQuestions(level, jobDescription, tags, features);
 		},
 		saveAnswer: async (answer, questionNumber) => {
 			const {questions} = interviewState;
@@ -119,9 +130,14 @@ export const InterviewProvider = (props) => {
 		},
 	};
 
-	const getQuestions = async (level, jobDescription) => {
+	const getQuestions = async (level, jobDescription, tags, features) => {
 		try {
-			const response = await backend.getQuestions(level, jobDescription);
+			const response = await backend.getQuestions(
+				level,
+				jobDescription,
+				tags,
+				features
+			);
 			if (!handleResponse(response, "Failed to fetch questions."))
 				return [];
 
@@ -130,7 +146,7 @@ export const InterviewProvider = (props) => {
 				questions: response.interview.questions,
 				id: response.interview.id,
 			}));
-			getQuestionAudios(response.interview.questions);
+			// await getQuestionAudios(response.interview.questions);
 			return response.interview.questions;
 		} catch (error) {
 			console.error("Error fetching questions:", error);
@@ -144,9 +160,13 @@ export const InterviewProvider = (props) => {
 			const audioFiles = await Promise.all(
 				questions.map((question) => backend.getAudio(question))
 			);
+			let temp = [];
+			for (let i = 0; i < audioFiles.length; i++) {
+				temp[i] = audioFiles[i].error ? null : audioFiles[i];
+			}
 			setInterviewState((prevState) => ({
 				...prevState,
-				questionAudio: audioFiles,
+				questionAudio: temp,
 			}));
 		} catch (error) {
 			console.error("Error fetching audio files:", error);
@@ -184,10 +204,32 @@ export const InterviewProvider = (props) => {
 			interviewState.questions.length !== 0
 		);
 	};
+	const uploadVideo = async (uploadResult) => {
+		try {
+			const response = await backend.getVideoResult(
+				uploadResult,
+				interviewState.id
+			);
+			if (!handleResponse(response, "Failed to analyze video.")) return;
+			setInterviewState((prevState) => ({
+				...prevState,
+				videoAnalysisResult: response.videoResult,
+			}));
+			return response;
+		} catch (error) {
+			console.error("Error uploading video:", error);
+			showToast.error("An error occurred while uploading the video.");
+		}
+	};
 
 	return (
 		<InterviewContext.Provider
-			value={{...interviewState, ...interviewActions, questionsLoaded}}>
+			value={{
+				...interviewState,
+				...interviewActions,
+				questionsLoaded,
+				uploadVideo,
+			}}>
 			{props.children}
 		</InterviewContext.Provider>
 	);

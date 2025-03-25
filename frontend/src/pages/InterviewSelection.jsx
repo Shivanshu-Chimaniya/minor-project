@@ -128,7 +128,9 @@ const InterviewSelection = () => {
 		try {
 			let result = await startInterview(
 				interviewTypes[index].level,
-				interviewTypes[index].description
+				interviewTypes[index].description,
+				interviewTypes[index].tags,
+				interviewTypes[index].features
 			);
 
 			if (result.length == 0) navigate("/selectinterview");
@@ -168,15 +170,15 @@ const InterviewSelection = () => {
 	return (
 		<div className="container mx-auto p-6  max-w-7xl">
 			<div
-				className={`relative h-full bg-violet-800/20 dark:bg-neutral-900/10 
-      ${isLoading ? "" : "backdrop-blur-sm dark:backdrop-blur-sm"} 
-				backdrop-blur-3xl
-      transition-all duration-800 ease-out flex flex-col justify-center items-center 
+				className={`relative h-full
+ flex flex-col justify-center items-center 
       text-zinc-800 dark:text-white text-center p-8`}>
 				<h1 className="text-3xl mb-2 font-bold text-zinc-800 dark:text-white text-center">
 					Choose Your Interview Type
 				</h1>
-				<p className="text-lg mb-4 max-w-3xl">Onlt Technical For Now</p>
+				<p className="text-lg mb-4 max-w-3xl">
+					Only Technical Job Roles For Now
+				</p>
 			</div>
 
 			<div className="flex flex-col sm:flex-row gap-8 relative">

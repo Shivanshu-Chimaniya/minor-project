@@ -4,6 +4,7 @@ const GameOfLife = () => {
 	// Get container dimensions
 	const containerRef = useRef(null);
 	const [dimensions, setDimensions] = useState({width: 0, height: 0});
+	const [isLoading, setIsLoading] = useState(true);
 
 	const CELL_SIZE = 30;
 	const [gridWidth, setGridWidth] = useState(0);
@@ -123,6 +124,14 @@ const GameOfLife = () => {
 		});
 	};
 
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setIsLoading(false);
+		}, 800);
+
+		return () => clearTimeout(timer);
+	}, []);
+
 	// Run simulation
 	useEffect(() => {
 		runSimulation.current = setInterval(() => {
@@ -138,7 +147,11 @@ const GameOfLife = () => {
 	}, [gridWidth, gridHeight]);
 
 	return (
-		<div className="flex flex-col items-center w-full h-full">
+		<div
+			className={`flex flex-col items-center w-full h-full ${
+				isLoading ? "" : "blur-md dark:blur-md"
+			}  
+				blur-3xl transition-filter duration-5000 dark:brightness-50`}>
 			<div
 				ref={containerRef}
 				className="flex-1 w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-900 dark:border-gray-700">

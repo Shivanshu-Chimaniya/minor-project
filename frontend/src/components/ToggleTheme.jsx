@@ -6,9 +6,15 @@ import {FaRegSun as Sun} from "react-icons/fa";
 export default function ThemeToggle() {
 	const {theme, toggleTheme} = useTheme();
 
+	const HandleClick = (e) => {
+		toggleTheme();
+		event.target.setAttribute("tabindex", "-1");
+		e.target.blur();
+	};
+
 	return (
 		<button
-			onClick={toggleTheme}
+			onClick={(e) => HandleClick(e)}
 			aria-label={`Switch to ${
 				theme === "light" ? "dark" : "light"
 			} mode`}

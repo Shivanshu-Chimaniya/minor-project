@@ -191,6 +191,15 @@ export const AuthProvider = ({children}) => {
 			return null;
 		}
 	};
+	// Get user details
+	const getToken = () => {
+		try {
+			return token;
+		} catch (error) {
+			showToast.error("No JWT Token detected.");
+			return null;
+		}
+	};
 
 	return (
 		<AuthContext.Provider
@@ -205,6 +214,7 @@ export const AuthProvider = ({children}) => {
 				verifyToken,
 				getUser,
 				user,
+				getToken,
 			}}>
 			{children}
 		</AuthContext.Provider>

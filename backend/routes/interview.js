@@ -7,6 +7,7 @@ const {
 	getAnswerFeedback,
 	getOverallResult,
 	getAudio,
+	getVideoResult,
 } = require("../controller/interview");
 
 const router = express.Router();
@@ -41,6 +42,13 @@ router.post("/answer-feedback", authenticate, getAnswerFeedback);
  * @access  Private (Requires JWT authentication)
  */
 router.post("/overall-result", authenticate, getOverallResult);
+
+/**
+ * @route   POST /interview/video-result
+ * @desc    Analyze and return video-based interview results
+ * @access  Private (Requires JWT authentication)
+ */
+router.post("/video-result", authenticate, getVideoResult);
 
 /**
  * @route   POST /interview/audio

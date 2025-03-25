@@ -79,8 +79,7 @@ module.exports.LoginOrSignupWithGoogle = async (req, res, next) => {
 				});
 			}
 		}
-		let res2132 = await user.save();
-		console.log(res2132);
+		await user.save();
 		// Generate JWT token
 		const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {
 			expiresIn: process.env.JWT_TIMEOUT,

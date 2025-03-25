@@ -1,6 +1,6 @@
 const express = require("express");
 const passport = require("passport");
-const {uploadResume} = require("../controller/profile");
+const {uploadResume, deleteResume} = require("../controller/profile");
 
 const router = express.Router();
 
@@ -13,5 +13,6 @@ const authenticate = passport.authenticate("jwt", {session: false});
  * @access  Private (Requires JWT authentication)
  */
 router.post("/upload-resume", authenticate, uploadResume);
+router.delete("/delete-resume", authenticate, deleteResume);
 
 module.exports = router;

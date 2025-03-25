@@ -80,7 +80,10 @@ const JobDetails = ({
 					About This Position
 				</h3>
 				<p className="text-gray-600 dark:text-gray-400">
-					{selectedJob.description}
+					{selectedJob.description &&
+					selectedJob.description.length > 700
+						? `${selectedJob.description.substring(0, 700)}...`
+						: selectedJob.description}
 				</p>
 			</div>
 

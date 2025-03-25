@@ -56,6 +56,14 @@ const InterviewSchema = new Schema({
 		type: Date,
 		default: Date.now,
 	},
+	videoResult: {
+		type: Schema.Types.Mixed,
+		default: {},
+	},
+	video: {
+		type: Schema.Types.Mixed,
+		default: {},
+	},
 });
 
 // Update the updatedAt field before saving

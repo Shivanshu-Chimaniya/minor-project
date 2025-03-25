@@ -16,6 +16,9 @@ const JobCard = ({jobDetails, tryInterview, index, isSelected}) => {
 		if (window.innerWidth < 640) {
 			setExpanded(!expanded);
 		}
+		if (!isAuthenticated) {
+			showToast.error("Please log in to start an interview.");
+		}
 	};
 
 	return (
@@ -29,13 +32,13 @@ const JobCard = ({jobDetails, tryInterview, index, isSelected}) => {
 				: "border-gray-200 dark:border-gray-700 hover:shadow-xl"
 		} ${shouldExpand || expanded ? "sm:h-auto" : "h-full"}`}
 			onClick={toggleExpand}>
-			<div className="px-4 pt-3 pb-2">
-				<div className="flex flex-wrap items-center justify-between mb-2">
+			<div className="px-4 pt-3 pb-1">
+				<div className="flex flex-col items-center justify-between ">
 					<h3 className="font-bold text-lg mb-1 text-gray-800 dark:text-[#e2e8f0] line-clamp-1 text-ellipsis">
 						{jobDetails.title}
 					</h3>
 					<span
-						className="px-2 py-1 text-xs font-semibold rounded-full 
+						className="px-1 py-1/2 text-[10px] font-semibold rounded-full 
             bg-blue-100 dark:bg-blue-900 
             text-blue-800 dark:text-blue-200 uppercase text-nowrap">
 						{jobDetails.level}
@@ -44,7 +47,7 @@ const JobCard = ({jobDetails, tryInterview, index, isSelected}) => {
 			</div>
 
 			{/* Description - always visible */}
-			<div className="px-4 py-2">
+			<div className="px-4  pb-2">
 				<p
 					className={`text-gray-600 dark:text-gray-300 text-sm mb-4 
           ${shouldExpand || expanded ? "" : "line-clamp-3"}`}>
@@ -80,7 +83,7 @@ const JobCard = ({jobDetails, tryInterview, index, isSelected}) => {
 				<div className="mt-auto px-4 pb-4">
 					<button
 						onClick={(e) => {
-							e.stopPropagation(); // Prevent card expansion when clicking the button
+							e.stopPropagation();
 							if (isAuthenticated) {
 								tryInterview(index);
 							} else {

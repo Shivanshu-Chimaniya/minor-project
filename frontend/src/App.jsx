@@ -15,9 +15,12 @@ import Summary from "./pages/Summary";
 import UploadResume from "./pages/UploadResume";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import VideoScreening from "./pages/VideoScreening";
+import AboutPage from "./pages/AboutPage";
 
 const App = () => {
 	const {isAuthenticated, loading} = useAuth();
+
+	console.log("updatiing");
 
 	return (
 		<>
@@ -38,6 +41,7 @@ const App = () => {
 					<Route path="/login" element={<Login />} />
 					<Route path="/register" element={<RegisterPage />} />
 					<Route path="/profile" element={<ProfilePage />} />
+					<Route path="/about" element={<AboutPage />} />
 				</Route>
 				<Route path="interview" element={<ProtectedRoute />}>
 					<Route index element={<UploadResume />} />

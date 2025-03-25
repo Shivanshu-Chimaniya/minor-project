@@ -14,7 +14,7 @@ const UploadResume = () => {
 	const [agreedToTerms, setAgreedToTerms] = useState(true);
 
 	const navigate = useNavigate();
-	const {uploadToCloudinary} = useCloudinary();
+	const {uploadResumeToCloudinary} = useCloudinary();
 	const {questionsLoaded} = useInterview();
 
 	const {uploadResume, useOldResume, jobDetails} = useInterview();
@@ -84,7 +84,7 @@ const UploadResume = () => {
 		navigate("/interview/videoscreening");
 		try {
 			if (file) {
-				const uploadResult = await uploadToCloudinary(file);
+				const uploadResult = await uploadResumeToCloudinary(file);
 				uploadResume(uploadResult);
 			} else if (selectedResumeId) {
 				useOldResume(selectedResumeId);
@@ -105,34 +105,34 @@ const UploadResume = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col items-center justify-center w-full">
 			{/* Top section with job details */}
-			<div className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700/20 px-6 py-5 mb-6 transition-colors duration-200">
+			<div className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700/20 px-6 py-5 mb-6 transition-colors duration-200 w-full">
 				<div className="max-w-6xl mx-auto">
 					{jobDetails.description ? (
 						<div className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-400 dark:border-blue-500 p-4 rounded transition-colors duration-200">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
-									<p className="text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">
-										<span className="font-medium text-gray-800 dark:text-gray-100">
-											Title:
-										</span>{" "}
+							<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+								<div className="md:col-span-1">
+									<h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 transition-colors duration-200">
 										{jobDetails.title ||
 											"Software Developer"}
-									</p>
-									<p className="text-gray-700 dark:text-gray-300 transition-colors duration-200">
-										<span className="font-medium text-gray-800 dark:text-gray-100">
-											Level:
-										</span>{" "}
+									</h3>
+									<span
+										className="px-2 py-1 text-[10px] font-semibold rounded-full 
+        bg-blue-100 dark:bg-blue-900 
+        text-blue-800 dark:text-blue-200 uppercase text-nowrap">
 										{jobDetails.level}
-									</p>
+									</span>
 								</div>
-								<div>
-									<p className="text-gray-700 dark:text-gray-300 transition-colors duration-200">
-										<span className="font-medium text-gray-800 dark:text-gray-100">
-											Description:
-										</span>{" "}
-										{jobDetails.description}
+								<div className="md:col-span-3">
+									<p className="text-gray-700 dark:text-gray-300 transition-colors duration-200 overflow-hidden">
+										{jobDetails.description &&
+										jobDetails.description.length > 500
+											? `${jobDetails.description.substring(
+													0,
+													500
+											  )}...`
+											: jobDetails.description}
 									</p>
 								</div>
 							</div>
@@ -153,7 +153,7 @@ const UploadResume = () => {
 			</div>
 
 			{/* Bottom section with two columns */}
-			<div className="max-w-6xl mx-auto px-6 pb-10">
+			<div className="w-full max-w-6xl mx-auto px-6 pb-10 ">
 				<div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 					{/* Left column: Resume upload and selection */}
 					<div className="md:col-span-5">
