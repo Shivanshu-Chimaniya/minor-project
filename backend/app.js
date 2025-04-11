@@ -14,9 +14,10 @@ const profileRoutes = require("./routes/profile");
 const app = express();
 
 // Middleware
+console.log(process.env.FRONTEND_URL);
 app.use(
 	cors({
-		origin: "http://localhost:5173", // Allow requests from your frontend
+		origin: `${process.env.FRONTEND_URL}`, // Allow requests from your frontend
 		methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods if needed
 		credentials: true, // Include cookies if required (optional)
 	})

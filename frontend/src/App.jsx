@@ -3,6 +3,7 @@ import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProtectedRoute from "./components/ProtectedRoute";
 import {useAuth} from "./context/AuthContext";
+import AboutPage from "./pages/AboutPage";
 import InterviewSelection from "./pages/InterviewSelection";
 import LandingPage from "./pages/LandingPage";
 import Layout from "./pages/Layout";
@@ -15,7 +16,6 @@ import Summary from "./pages/Summary";
 import UploadResume from "./pages/UploadResume";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import VideoScreening from "./pages/VideoScreening";
-import AboutPage from "./pages/AboutPage";
 
 const App = () => {
 	const {isAuthenticated, loading} = useAuth();
