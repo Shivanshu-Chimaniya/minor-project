@@ -138,7 +138,12 @@ export const InterviewProvider = (props) => {
 				tags,
 				features
 			);
-			if (!handleResponse(response, "Failed to fetch questions."))
+			if (
+				!handleResponse(
+					response,
+					"Failed to fetch questions. try Reloading"
+				)
+			)
 				return [];
 
 			setInterviewState((prevState) => ({
