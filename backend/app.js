@@ -14,10 +14,10 @@ const profileRoutes = require("./routes/profile");
 const app = express();
 
 // Middleware
-console.log(process.env.FRONTEND_URL);
+// console.log(process.env.FRONTEND_URL);
 app.use(
 	cors({
-		origin: `${process.env.FRONTEND_URL}`, // Allow requests from your frontend
+		origin: "*", // Allow requests from your frontend
 		methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods if needed
 		credentials: true, // Include cookies if required (optional)
 	})
@@ -31,15 +31,14 @@ app.use(passport.initialize());
 require("./config/passport")(passport);
 app.use(passport.session());
 
-// const MONGO_URL = "mongodb://127.0.0.1:27017/interview";
+const MONGO_URL = "mongodb://127.0.0.1:27017/interview";
 mongoose
-	.connect(process.env.MONGO_URL)
+	.connect(MONGO_URL)
 	.then(() => console.log("MongoDB connected"))
-	.catch((err) => console.log("MongoDB connection error:", err));
+	.catch((err) => console.log("MongoDB connection error:"));
 
-app.use("/", (req, res, next) => {
-	console.log(req.originalUrl);
-	next();
+app.get("/", (req, res) => {
+	res.json("connected");
 });
 
 app.use("/auth", authRoutes);
@@ -52,5 +51,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-	console.log(`Server is running on port ${PORT}`);
+	console.log(`Server is running on port ${"http://localhost:" + PORT}`);
 });

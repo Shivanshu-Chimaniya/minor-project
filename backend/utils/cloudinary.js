@@ -16,7 +16,6 @@ const uploadImageToCloudinary = async (googleImageUrl) => {
 
 		if (response.ok) {
 			console.log("Uploaded Successfully:", data);
-			console.log(data.secure_url);
 			return data.secure_url; // Cloudinary URL of the uploaded image
 		} else {
 			throw new Error(data.error.message);
